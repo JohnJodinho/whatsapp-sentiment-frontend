@@ -1,31 +1,15 @@
-import { Routes, Route } from 'react-router-dom'
-import MainLayout from "@/layouts/MainLayout"
-import HomePage from "@/pages/HomePage"
-// import DashboardPage from "@/pages/DashboardPage" // Example for another page
+import { Routes, Route } from 'react-router-dom';
+import MainLayout from "@/layouts/MainLayout";
+import HomePage from "@/pages/home/HomePage";
+import UploadPage from "@/pages/upload/UploadPage";
 
 function App() {
   return (
     <Routes>
-      <Route 
-        path="/" 
-        element={
-          <MainLayout>
-            <HomePage />
-          </MainLayout>
-        } 
-      />
-      
-      {/* 👇 Example of another route that would have the footer */}
-      {/* <Route 
-        path="/dashboard" 
-        element={
-          <MainLayout>
-            <DashboardPage />
-          </MainLayout>
-        } 
-      /> */}
+      <Route path="/" element={<MainLayout><HomePage /></MainLayout>} />
+      <Route path="/upload" element={<MainLayout><UploadPage /></MainLayout>} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

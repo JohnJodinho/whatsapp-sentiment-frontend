@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Menu, X } from "lucide-react"
 import CustomButton from "@/components/custom-ui/projectbutton"
 import { Button } from "@/components/ui/button"
@@ -18,9 +18,22 @@ const navLinks = [
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
+  const [hasScrolled, setHasScrolled] = useState(false)
+  useEffect(() => {
+    const handleScroll = () => {
+      setHasScrolled(window.scrollY > 20)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-sm bg-background/90 border-b border-border transition-colors">
+    <header 
+      className={cn(
+        "sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 transition-shadow duration-300",
+        hasScrolled ? "shadow-md border-b border-border/40" : "border-b border-transparent"
+      )}
+    >
       <nav className="grid grid-cols-2 md:grid-cols-3 items-center h-16 w-full max-w-7xl mx-auto px-4 md:px-8">
         
         {/* Column 1: Logo */}

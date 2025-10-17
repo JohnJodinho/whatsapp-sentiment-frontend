@@ -132,6 +132,8 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --cta-gradient-start: oklch(0.25 0.05 250); /* Darker blue */
+  --cta-gradient-end: oklch(0.2 0.08 280);   /* Darker purple */
 }
 
 /* ---------------------- */
@@ -148,6 +150,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  button, a, [role="button"], [role="link"] {
+    @apply smooth-transition;
+  }
 }
 
 /* ---------------------- */
@@ -156,6 +162,10 @@
 @layer utilities {
   .transition-theme {
     @apply transition-colors duration-300 ease-in-out;
+  }
+
+  .smooth-transition {
+    @apply transition-all duration-300 ease-in-out;
   }
   
   /* Add this class for the active nav link underline */

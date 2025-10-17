@@ -53,12 +53,15 @@
 }
 
 :root {
-  /* transition: background-color 0.3s, color 0.3s; */
+  transition: background-color 0.3s, color 0.3s;
   --radius: 0.625rem;
 
   /* Custom App Colors */
   --mint: 165 80% 40%;
   --blue-accent: 210 80% 55%;
+  /* Bubble colors */
+  --bubble-light: 210 20% 95%; /* soft white-gray for light mode */
+  --bubble-dark: 210 15% 18%;  /* muted blue-gray for dark backgrounds */
 
   /* Light mode defaults (matched to design) */
   --background: oklch(0.985 0 0); /* Off-white */
@@ -100,6 +103,10 @@
   --mint: 165 70% 45%;
   --blue-accent: 210 70% 60%;
 
+  /* Bubble colors (reversed for dark mode) */
+  --bubble-light: 210 15% 18%;
+  --bubble-dark: 210 10% 15%;
+
   /* Dark mode defaults (matched to design) */
   --background: oklch(0.2 0.025 250);   /* Dark blue-gray */
   --foreground: oklch(0.95 0.01 250); /* Light grayish blue */
@@ -132,6 +139,45 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --cta-gradient-start: oklch(0.25 0.05 250); /* Darker blue */
+  --cta-gradient-end: oklch(0.2 0.08 280);   /* Darker purple */
+}
+
+
+/* ---------------------- */
+/* UTILITY ENHANCEMENTS   */
+/* ---------------------- */
+@layer utilities {
+  .transition-theme {
+    @apply transition-colors duration-300 ease-in-out;
+  }
+
+
+  
+  /* Add this class for the active nav link underline */
+  .nav-link-active {
+    @apply text-[color:hsl(var(--mint))] relative;
+  }
+  
+  .nav-link-active::after {
+    content: '';
+    @apply absolute -bottom-2 left-0 w-full h-[2px] bg-[color:hsl(var(--mint))];
+  }
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.95;
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 3s ease-in-out infinite;
 }
 
 /* ---------------------- */
@@ -143,28 +189,13 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased font-sans;
+    @apply bg-background text-foreground antialiased transition-colors duration-300 font-sans;
     font-family: "Inter", sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-}
 
-/* ---------------------- */
-/* UTILITY ENHANCEMENTS   */
-/* ---------------------- */
-@layer utilities {
-  .transition-theme {
-    @apply transition-colors duration-300 ease-in-out;
-  }
-  
-  /* Add this class for the active nav link underline */
-  .nav-link-active {
-    @apply text-[color:hsl(var(--mint))] relative;
-  }
-  
-  .nav-link-active::after {
-    content: '';
-    @apply absolute -bottom-2 left-0 w-full h-[2px] bg-[color:hsl(var(--mint))];
+  button, a, [role="button"], [role="link"] {
+    @apply transition-all duration-300 ease-in-out;
   }
 }
