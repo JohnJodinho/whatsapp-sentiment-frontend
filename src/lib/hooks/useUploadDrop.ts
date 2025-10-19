@@ -1,30 +1,22 @@
 import { useState, useCallback, useRef } from "react";
 import type React from "react";
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE_BYTES = 30 * 1024 * 1024; // 5MB
 
 interface UseUploadDropOptions {
-  /** Callback fired when a valid file is dropped or selected. */
   onFileDrop: (file: File) => void;
-  /** Callback fired when a file is rejected due to validation errors. */
   onFileReject?: (reason: string) => void;
-  /** Maximum file size in bytes. Defaults to 5MB. */
   maxSize?: number;
-  /** Accepted file types. See https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#accept */
   accept?: Record<string, string[]>;
+  disabled?: boolean
 }
 
-/**
- * Custom hook to manage drag-and-drop file upload functionality.
- * Handles drag events, keyboard activation, and client-side file validation.
- * @param options - Configuration options for the hook.
- * @returns An object with props to spread on the root and input elements.
- */
 export function useUploadDrop({
   onFileDrop,
   onFileReject,
   maxSize = MAX_FILE_SIZE_BYTES,
-  accept = { "text/plain": [".txt"] },
+  accept = { "text/plain": [".txt"], "application/zip":  [".zip", ".x-zip-compressed"]},
+  disabled = false
 }: UseUploadDropOptions) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -58,40 +50,46 @@ export function useUploadDrop({
   }, [isValidFile, onFileDrop, onFileReject]);
 
   const onDragEnter = useCallback((e: React.DragEvent<HTMLElement>) => {
+    if (disabled) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
-  }, []);
+  }, [disabled]);
 
   const onDragOver = useCallback((e: React.DragEvent<HTMLElement>) => {
+    if (disabled) return;
     e.preventDefault();
     e.stopPropagation();
     if (!isDragging) setIsDragging(true);
-  }, [isDragging]);
+  }, [disabled, isDragging]);
 
   const onDragLeave = useCallback((e: React.DragEvent<HTMLElement>) => {
+    if (disabled) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-  }, []);
+  }, [disabled]);
 
   const onDrop = useCallback((e: React.DragEvent<HTMLElement>) => {
+    if (disabled) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
     handleFileSelect(e.dataTransfer.files);
-  }, [handleFileSelect]);
+  }, [disabled, handleFileSelect]);
   
   const openFileDialog = () => {
+    if (disabled) return;
     inputRef.current?.click();
   };
   
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLElement>) => {
+    if (disabled) return;
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       openFileDialog();
     }
-  }, []);
+  }, [disabled]);
 
   const getRootProps = () => ({
     onDragEnter,
@@ -101,8 +99,9 @@ export function useUploadDrop({
     onKeyDown,
     onClick: openFileDialog,
     role: "button",
-    tabIndex: 0,
+    tabIndex: disabled ? -1 : 0,
     "aria-label": "File drop zone",
+    "aria-disabled": disabled,
   });
 
   const getInputProps = () => ({
@@ -111,6 +110,7 @@ export function useUploadDrop({
     style: { display: "none" },
     accept: Object.values(accept).flat().join(","),
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleFileSelect(e.target.files),
+    disabled,
   });
 
   return { isDragging, getRootProps, getInputProps };

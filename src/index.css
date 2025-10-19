@@ -175,9 +175,80 @@
     opacity: 0.95;
   }
 }
+/* Add at bottom of index.css */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-out-to-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-out-to-bottom {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Optional fade (for backdrop) */
+@keyframes fade-in {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+
+@keyframes fade-out {
+  from { opacity: 1 }
+  to { opacity: 0 }
+}
 
 .animate-float-slow {
   animation: float-slow 3s ease-in-out infinite;
+}
+/* Animate SheetContent based on [data-state] */
+[data-state="open"][data-side="right"] {
+  animation: slide-in-from-right 0.3s ease-out forwards;
+}
+
+[data-state="closed"][data-side="right"] {
+  animation: slide-out-to-right 0.3s ease-in forwards;
+}
+
+[data-state="open"][data-side="bottom"] {
+  animation: slide-in-from-bottom 0.3s ease-out forwards;
+}
+
+[data-state="closed"][data-side="bottom"] {
+  animation: slide-out-to-bottom 0.3s ease-in forwards;
+}
+
+/* Animate overlay fade */
+[data-state="open"].sheet-overlay {
+  animation: fade-in 0.3s ease-out forwards;
+}
+[data-state="closed"].sheet-overlay {
+  animation: fade-out 0.3s ease-in forwards;
 }
 
 /* ---------------------- */
@@ -199,3 +270,4 @@
     @apply transition-all duration-300 ease-in-out;
   }
 }
+

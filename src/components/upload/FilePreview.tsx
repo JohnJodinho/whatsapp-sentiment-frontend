@@ -7,10 +7,9 @@ interface FilePreviewProps {
   file: File;
   isValidExport: boolean | null; // null while checking
   onRemove: () => void;
-  onReplace: () => void;
 }
 
-export function FilePreview({ file, isValidExport, onRemove, onReplace }: FilePreviewProps) {
+export function FilePreview({ file, isValidExport, onRemove }: FilePreviewProps) {
   return (
     <div
       className="w-full p-6 min-h-[140px] border-2 border-dashed border-[color:hsl(var(--mint))]/40 rounded-[18px]
@@ -35,10 +34,10 @@ export function FilePreview({ file, isValidExport, onRemove, onReplace }: FilePr
               : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
           )}>
             {isValidExport ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-            <span>{isValidExport ? "Valid WhatsApp export" : "Needs confirmation"}</span>
+            <span>{isValidExport ? "Valid WhatsApp export" : "Invalid export"}</span>
           </div>
         )}
-        <Button onClick={onReplace} variant="link" className="text-primary font-semibold hidden sm:inline-flex">Replace</Button>
+        
         <Button onClick={onRemove} variant="ghost" size="icon" aria-label="Remove uploaded file">
           <X className="w-5 h-5" />
         </Button>

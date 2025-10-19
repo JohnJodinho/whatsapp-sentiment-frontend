@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,7 +24,7 @@ export default function HomePage() {
   // Hook to get the current theme (light or dark)
   const { theme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
-
+  const navigate = useNavigate();
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -52,7 +53,11 @@ export default function HomePage() {
               Get instant emotional insights from your exported chat files using our advanced sentiment analysis tool.
             </p>
             <div className="flex flex-wrap gap-4 mt-8">
-              <Button size="lg" className="px-6 py-3 text-sm md:text-base bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))] text-primary-foreground hover:opacity-90 font-semibold">
+              <Button
+                size="lg"
+                className="px-6 py-3 text-sm md:text-base bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))] text-primary-foreground hover:opacity-90 font-semibold"
+                onClick={() => navigate('/upload')}
+              >
                 Upload Chat
               </Button>
               <Button size="lg" variant="outline" className="px-6 py-3 text-sm md:text-base border-[hsl(var(--mint))] text-[hsl(var(--mint))] hover:bg-[hsl(var(--mint))]/10 hover:text-[hsl(var(--mint))] font-semibold">
@@ -168,6 +173,7 @@ export default function HomePage() {
         <Button 
         size="lg" 
         className="px-6 py-3 text-sm md:text-base bg-white text-[hsl(var(--mint))] font-semibold hover:bg-white/90"
+        onClick={() => navigate("/upload")}
         >
         Upload Chat Now
         </Button>
