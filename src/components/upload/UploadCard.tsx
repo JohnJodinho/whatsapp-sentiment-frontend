@@ -145,10 +145,10 @@ export function UploadCard() {
       <div className="relative z-20 space-y-8">
         <div className="space-y-2">
           <h1 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight">
-            {chat ? "Analysis in Progress" : "Upload your WhatsApp chat (.txt)"}
+            {chat ? "Upload Successful!" : "Upload your WhatsApp chat (.txt)"}
           </h1>
           <p className="mt-2 text-lg text-muted-foreground max-w-[620px] mx-auto leading-relaxed -[clamp(0.9rem, 1.2vw, 1.2rem)]">
-            {chat ? `Your chat "${chat.title}" is being analyzed.` : "We’ll analyze the sentiment instantly — privately, in your browser."}
+            {chat ? `Chat "${chat.title}" has been uploaded for analysis.` : "We’ll analyze the sentiment instantly — privately, in your browser."}
           </p>
         </div>
 
@@ -171,7 +171,7 @@ export function UploadCard() {
             )}
           </AnimatePresence>
           </div>
-          <div className="mx-auto w-[520px]">
+          <div className="flex justify-center w-full">
             <PrimaryCTA 
               uploadState={chat ? 'uploaded' : 'ready'}
               disabled={!selectedFile || !isValidExport}

@@ -53,11 +53,12 @@ export function Navbar() {
               key={link.name}
               href={link.href}
               className={cn(
-                "px-3 py-2 rounded-md text-sm font-medium text-muted-foreground transition-colors",
+                "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground transition-colors",
                 "hover:bg-muted hover:text-primary"
               )}
             >
-              {link.name}
+              <link.icon className="h-4 w-4" />
+              <span>{link.name}</span>
             </a>
           ))}
         </div>
