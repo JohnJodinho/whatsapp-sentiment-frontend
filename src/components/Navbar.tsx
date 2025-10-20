@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 
 import { Menu, Home, Upload, LayoutDashboard, Info } from "lucide-react"
 import CustomButton from "@/components/custom-ui/projectbutton"
