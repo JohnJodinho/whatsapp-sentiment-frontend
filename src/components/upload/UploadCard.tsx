@@ -148,7 +148,7 @@ export function UploadCard() {
             {chat ? "Upload Successful!" : "Upload your WhatsApp chat (.txt)"}
           </h1>
           <p className="mt-2 text-lg text-muted-foreground max-w-[620px] mx-auto leading-relaxed -[clamp(0.9rem, 1.2vw, 1.2rem)]">
-            {chat ? `Chat "${chat.title}" has been uploaded for analysis.` : "We’ll analyze the sentiment instantly — privately, in your browser."}
+            {chat ? `Chat "${chat.title}" has been uploaded for analysis.` : "Chats uploaded are securely sent to server to generate sentiment insights."}
           </p>
         </div>
 
@@ -186,7 +186,7 @@ export function UploadCard() {
 
         <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground font-medium">
           <Lock className="w-4 h-4" />
-          <span>No data leaves your device.</span>
+          <span>Uploaded chats are used only for analysis and are not stored after processing.</span>
         </div>
       </div>
     </div>

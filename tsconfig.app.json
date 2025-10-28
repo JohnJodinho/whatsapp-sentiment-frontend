@@ -33,6 +33,6 @@
       ]
     }
   },
-  "include": ["src"]
+  "include": ["src", "gauge_guy.tsx"]
 }
 
