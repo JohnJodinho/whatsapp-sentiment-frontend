@@ -23,3 +23,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+src/lib/message-sentiments-mock-data-0.json
+src/lib/message-sentiments-mock-data-1.json
+src/lib/mock-data_1.json
+src/lib/mock-data_2.json
+src/lib/mock-data.json
+src/lib/segment-sentiments-mock-data0.json
+src/lib/segment-sentiments-mock-data2.json
