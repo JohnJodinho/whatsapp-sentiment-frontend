@@ -40,18 +40,9 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import type { SentimentFilterState, SentimentGranularity, SentimentLabel } from "@/types/sentimentDashboardData";
 
-// Type for the filter state passed to the parent
-export type SentimentGranularity = "message" | "segment";
-export type SentimentLabel = "Positive" | "Negative" | "Neutral";
 
-export interface SentimentFilterState {
-  participants: string[];
-  dateRange: DateRange | undefined;
-  timePeriod: string;
-  granularity: SentimentGranularity;
-  sentimentTypes: SentimentLabel[];
-}
 
 // Props for the FiltersCard
 interface SentimentFiltersCardProps {

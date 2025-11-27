@@ -10,15 +10,9 @@ import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
-
+import type { DailySentimentBreakdown } from "@/types/sentimentDashboardData";
 // --- Data Structure ---
-interface DailySentimentBreakdown {
-  positive: number;
-  negative: number;
-  neutral: number;
-  total: number;
-  score: number; // (%Pos - %Neg)
-}
+
 type SentimentByDayData = {
   [key in 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat']?: DailySentimentBreakdown; // Make optional if API might omit days
 };
@@ -61,15 +55,21 @@ export function SentimentDayChart({ isLoading, data }: SentimentDayChartProps) {
     ].filter(d => d.value > 0); // Only include segments with value > 0
   }, [activeDayData]);
 
-  const activeIndex = useMemo(
-    () => pieData.findIndex(d => d.value === Math.max(...pieData.map(p => p.value))),
-    [pieData]
-  );
+  const activeIndex = useMemo(() => {
+    // If we have no data to display, don't try to highlight anything
+    if (pieData.length === 0) {
+      return undefined;
+    }
+    
+    // Find the largest segment to highlight it
+    const maxValue = Math.max(...pieData.map(p => p.value));
+    return pieData.findIndex(d => d.value === maxValue);
+  }, [pieData]);
 
 
   // Responsive radii
-  const outerRadius = isMobile ? 80 : 100;
-  const innerRadius = isMobile ? 40 : 60;
+  const outerRadius = isMobile ? 90 : 110;
+  const innerRadius = isMobile ? 50 : 70;
 
   // Handle Loading State
   if (isLoading) {
@@ -98,8 +98,8 @@ export function SentimentDayChart({ isLoading, data }: SentimentDayChartProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeInOut" }}
     >
-      <Card data-chart={id} className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 h-[400px] flex flex-col">
-        <CardHeader className="p-4 flex flex-row items-center justify-between border-b">
+      <Card data-chart={id} className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 h-[450px] flex flex-col">
+        <CardHeader className="p-4 flex flex-row items-center justify-between">
           <div className="space-y-0.5">
             <CardTitle className="text-base font-semibold">Sentiment by Day</CardTitle>
             <CardDescription className="text-sm text-muted-foreground">Distribution for selected day</CardDescription>
@@ -119,7 +119,7 @@ export function SentimentDayChart({ isLoading, data }: SentimentDayChartProps) {
           </Select>
         </CardHeader>
 
-        <CardContent className="flex-1 flex items-center justify-center p-4">
+        <CardContent className="flex-1 flex items-center justify-center px-4 pb-10 pt-0">
           <ChartContainer
             config={{}} // Config not strictly needed if colors are in data
             className="w-full max-w-[250px] aspect-square"

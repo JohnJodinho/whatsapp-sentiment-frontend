@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Loader2, XCircle } from "lucide-react";
-import { simulateSentimentProgress, cancelSentimentAnalysis } from "@/lib/api"; // Import simulation functions
-
+import { monitorSentimentProgress, cancelSentimentAnalysis } from "@/lib/api/sentimentSSEService"; // Import simulation functions
+import type { ProgressData, ErrorData } from "@/types/sentimentProgress";
 interface SentimentProgressViewProps {
   chatId: string;
   onComplete: () => void;
-  onError: (error: string) => void;
+  onError: (error: ErrorData) => void;
 }
 
 export function SentimentProgressView({ chatId, onComplete, onError }: SentimentProgressViewProps) {
@@ -16,13 +16,13 @@ export function SentimentProgressView({ chatId, onComplete, onError }: Sentiment
   const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
-    console.log("Starting SSE simulation for chat:", chatId);
-    setStatusText("Starting analysis...");
+    console.log("Starting SSE connection for chat:", chatId);
+    setStatusText("Connecting to analysis worker...");
 
-    // Simulate SSE connection
-    const cleanup = simulateSentimentProgress(
+    // 2. This call remains identical, but now uses the REAL EventSource implementation
+    const cleanup = monitorSentimentProgress(
       chatId,
-      (data) => { // onProgress callback
+      (data: ProgressData) => { // onProgress callback
         setProgress(data.percent);
         setStatusText(
           `Analyzing... (${data.messages_done}/${data.messages_total} messages, ${data.segments_done}/${data.segments_total} segments)`
@@ -31,47 +31,42 @@ export function SentimentProgressView({ chatId, onComplete, onError }: Sentiment
       () => { // onComplete callback
         setStatusText("Analysis Complete!");
         setProgress(100);
-        // Add a small delay before calling parent onComplete to show 100%
         setTimeout(onComplete, 1000); 
       },
-      (errorData) => { // onError callback
+      (errorData: ErrorData) => { // onError callback
          setStatusText(`Error: ${errorData.error}`);
-         onError(errorData.error); // Notify parent
+         // Note: The SSE error handler will also catch when the chat
+         // is deleted after cancellation (e.g., "Chat not found").
+         // This is the expected way to stop the process.
+         onError(errorData); // Notify parent
       }
     );
 
-    // Return cleanup function to stop simulation if component unmounts
+    // Return cleanup function to close EventSource if component unmounts
     return cleanup;
 
-  }, [chatId, onComplete, onError]); // Rerun if chatId changes (shouldn't normally)
+  }, [chatId, onComplete, onError]);
 
-  const handleCancel = async () => {
+ const handleCancel = async () => {
     setIsCancelling(true);
     setStatusText("Requesting cancellation...");
     try {
-      await cancelSentimentAnalysis(chatId); // Call simulated API
-      setStatusText("Cancellation requested. Stopping analysis...");
-      // Note: In a real scenario, the backend might take time to stop.
-      // The SSE stream might send a final 'cancelled' event.
-      // For simulation, we might just stop listening or manually trigger an error/different state.
-      // For now, let's assume the cleanup handles stopping the simulation.
-      // You might want to navigate away or show a different UI after cancellation.
-       console.log("Cancellation requested for chat:", chatId);
-       // Example: navigate back or show a "cancelled" message
-       // navigate(-1); 
+      await cancelSentimentAnalysis(chatId); // Call REAL API
+      setStatusText("Cancellation requested. Waiting for worker to stop...");
+      // The onError callback will handle the next step
     } catch (error) {
       console.error("Failed to request cancellation:", error);
-      setStatusText("Failed to request cancellation.");
-    } finally {
-      setIsCancelling(false); // Re-enable button if needed, though usually you'd navigate away
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      setStatusText(`Failed to request cancellation: ${errorMsg}`);
+      setIsCancelling(false); 
     }
   };
 
-
+  // 3. No changes needed to your JSX! It's all state-driven.
   return (
     <div className="flex flex-col items-center justify-center h-[calc(100vh-80px)] bg-background text-center space-y-6 px-6">
       <div className="relative">
-        <Loader2 className="w-16 h-16 text-mint animate-spin" />
+        <Loader2 className="w-16 h-16 text-[hsl(var(--blue-accent))] animate-spin" />
          <span className="absolute inset-0 flex items-center justify-center text-lg font-semibold text-foreground">
            {progress}%
          </span>
@@ -86,19 +81,24 @@ export function SentimentProgressView({ chatId, onComplete, onError }: Sentiment
         </p>
       </div>
 
-      <Progress value={progress} className="w-full max-w-md h-3" />
+      <Progress value={progress} className="w-full max-w-md h-3 [&>*]:bg-gradient-to-r [&>*]:from-[hsl(var(--mint))] [&>*]:to-[hsl(var(--blue-accent))]" />
 
       <Button
         variant="outline"
         onClick={handleCancel}
-        disabled={isCancelling}
+        disabled={isCancelling || progress === 100} // Disable if cancelling or complete
         className="rounded-xl"
       >
-        <XCircle className="w-4 h-4 mr-2" />
+        {isCancelling ? (
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        ) : (
+          <XCircle className="w-4 h-4 mr-2" />
+        )}
         {isCancelling ? "Cancelling..." : "Cancel Analysis"}
       </Button>
       <p className="text-xs text-muted-foreground max-w-sm">
-         Sentiment analysis runs locally in the background. You can navigate away, but cancelling will stop the current process.
+         Sentiment analysis runs in the background. You can safely close this tab; 
+         the analysis will continue.
       </p>
     </div>
   );

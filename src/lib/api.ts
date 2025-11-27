@@ -1016,7 +1016,7 @@ function buildTrendData(data: (MockSentimentMessage | MockSentimentSegment)[]): 
   }
 
   const trendMap = new Map<string, { Positive: number; Negative: number; Neutral: number }>();
-
+  console.log(`Building trend data with ${granularityLabel} granularity.`);
   data.forEach(item => {
     const periodKey = periodKeyGetter(parseISO(item.date));
     const label = normalizeLabel(item.overall_label);

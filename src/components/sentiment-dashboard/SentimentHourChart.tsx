@@ -6,16 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTheme } from "next-themes";
-
-
-// --- Data Structure ---
-interface HourlySentimentBreakdown {
-  hour: number; // 0-23
-  Positive: number;
-  Negative: number;
-  Neutral: number;
-  total: number;
-}
+import type { HourlySentimentBreakdown } from "@/types/sentimentDashboardData";
 
 interface SentimentHourChartProps {
   isLoading: boolean;
@@ -38,7 +29,7 @@ function useChartColors() {
 
 // --- Main Component ---
 export function SentimentHourChart({ isLoading, data }: SentimentHourChartProps) {
-  const { tickColor, gridColor } = useChartColors();
+  const { gridColor } = useChartColors();
 
   // Handle Loading State
   if (isLoading) {
@@ -71,28 +62,28 @@ export function SentimentHourChart({ isLoading, data }: SentimentHourChartProps)
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
                data={data}
-               stackOffset="expand" // Stacks to 100%
-               margin={{ top: 5, right: 0, left: -20, bottom: 0 }} // Adjust margins
+              //  stackOffset="expand" // Stacks to 100%
+              //  margin={{ top: 5, right: 0, left: -20, bottom: 0 }} // Adjust margins
             >
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
               <XAxis
                 dataKey="hour"
-                tick={{ fill: tickColor, fontSize: 10 }}
+                tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${value}h`}
-                interval={2} // Show every 3rd hour label
+                interval={1} // Show every 3rd hour label
               />
               <YAxis
                 type="number"
-                tick={{ fill: tickColor, fontSize: 10 }}
+                tick={false}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
+                
                 domain={[0, 1]}
               />
               <Tooltip
-                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
+                  cursor={{ fill: 'hsl(var(--muted))', opacity: 0.05 }}
                    content={({ active, payload, label }) => {
                      if (active && payload && payload.length) {
                        const hourLabel = `${label}:00 - ${parseInt(label, 10) + 1}:00`;
@@ -101,13 +92,16 @@ export function SentimentHourChart({ isLoading, data }: SentimentHourChartProps)
                        if (!original) return null;
                         // Safely get percentage value for a given dataKey from payload
                        const getPercent = (key: string) => {
-                         type PayloadItem = { dataKey?: string | number; value?: number | string | null };
-                         const items: PayloadItem[] = Array.isArray(payload) ? (payload as PayloadItem[]) : [];
-                         const item = items.find((p) => String(p.dataKey) === key);
-                         const val = item?.value ?? 0;
-                         const num = typeof val === "number" ? val : Number(val ?? 0);
-                         return `${Math.round(num * 100)}%`;
-                       };
+                        type PayloadItem = { dataKey?: string | number; value?: number | string | null };
+                        const items: PayloadItem[] = Array.isArray(payload) ? (payload as PayloadItem[]) : [];
+                        const item = items.find((p) => String(p.dataKey) === key);
+                        const val = item?.value ?? 0;
+                        const count = typeof val === "number" ? val : Number(val ?? 0);
+                        
+                        // Calculate percentage based on total
+                        const percentage = original.total > 0 ? (count / original.total) * 100 : 0;
+                        return `${Math.round(percentage)}%`;
+                      };
                        return (
                          <div className="rounded-lg border bg-card/90 p-2 shadow-sm backdrop-blur-sm text-xs">
                            <p className="font-bold mb-1">{hourLabel}</p>
@@ -128,8 +122,8 @@ export function SentimentHourChart({ isLoading, data }: SentimentHourChartProps)
               />
               {/* Optional Legend */}
               {/* <Legend iconSize={10} wrapperStyle={{ fontSize: '11px', paddingTop: '10px'}}/> */}
-              <Bar dataKey="Positive" stackId="a" fill="hsl(var(--sentiment-positive))" barSize={15} />
-              <Bar dataKey="Negative" stackId="a" fill="hsl(var(--sentiment-negative))" barSize={15} />
+              <Bar dataKey="Positive" stackId="a" fill="hsl(var(--sentiment-positive))" barSize={15} radius={[0, 0, 1, 1]} />
+              <Bar dataKey="Negative" stackId="a" fill="hsl(var(--sentiment-negative))" barSize={15} radius={[0, 0, 1, 1]} />
               <Bar dataKey="Neutral" stackId="a" fill="hsl(var(--sentiment-neutral))" barSize={15} radius={[4, 4, 0, 0]}/> {/* Rounded top */}
             </BarChart>
           </ResponsiveContainer>

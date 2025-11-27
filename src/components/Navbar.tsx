@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, Home, Upload, LayoutDashboard, Info } from "lucide-react"
+import { Menu, Home, Upload, LayoutDashboard, Info, MessageCircleIcon } from "lucide-react"
 import CustomButton from "@/components/custom-ui/projectbutton"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -9,19 +9,20 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { cn } from "@/lib/utils"
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
-import { Link } from "react-router-dom" // ✅ FIXED
+import { Link } from "react-router-dom"
 
 const navLinks = [
   { name: "Home", href: "/", icon: Home },
   { name: "Upload", href: "/upload", icon: Upload },
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "About", href: "/about", icon: Info },
+  { name: "Chat", href: "/chat-to-chat", icon: MessageCircleIcon },
+  { name: "About", href: "/about", icon: Info }
 ]
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
   const [hasScrolled, setHasScrolled] = useState(false)
-  const isMobile = useMediaQuery("(max-width: 768px)")
+  const isMobile = useMediaQuery("(max-width: 768px)") // This corresponds to "md" breakpoint
 
   useEffect(() => {
     const handleScroll = () => setHasScrolled(window.scrollY > 20)
@@ -48,19 +49,21 @@ export function Navbar() {
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex justify-center items-center space-x-2">
+        <div className="hidden md:flex justify-center items-center space-x-1 lg:space-x-2">
           {navLinks.map((link) =>
             link.name === "Dashboard" ? (
               <DropdownMenu key={link.name}>
                 <DropdownMenuTrigger asChild>
                   <button
                     className={cn(
-                      "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground transition-colors",
-                      "hover:bg-muted hover:text-primary"
+                      "flex items-center p-2 lg:px-3 lg:py-2 rounded-md text-sm font-medium text-muted-foreground transition-colors",
+                      "hover:bg-muted hover:text-primary",
+                      "lg:space-x-2" // Space only on large screens
                     )}
                   >
                     <link.icon className="h-4 w-4" />
-                    <span>{link.name}</span>
+                    {/* ✅ MODIFICATION: Hide text unless screen is lg or larger */}
+                    <span className="hidden lg:inline">{link.name}</span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-52">
@@ -77,12 +80,14 @@ export function Navbar() {
                 key={link.name}
                 to={link.href}
                 className={cn(
-                  "flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground transition-colors",
-                  "hover:bg-muted hover:text-primary"
+                  "flex items-center p-2 lg:px-3 lg:py-2 rounded-md text-sm font-medium text-muted-foreground transition-colors",
+                  "hover:bg-muted hover:text-primary",
+                  "lg:space-x-2" // Space only on large screens
                 )}
               >
                 <link.icon className="h-4 w-4" />
-                <span>{link.name}</span>
+                {/* ✅ MODIFICATION: Hide text unless screen is lg or larger */}
+                <span className="hidden lg:inline">{link.name}</span>
               </Link>
             )
           )}
@@ -90,11 +95,13 @@ export function Navbar() {
 
         {/* Right Section (and Mobile Menu) */}
         <div className="flex justify-end items-center gap-3">
+          {/* Show these on desktop/tablet view */}
           <div className="hidden md:flex items-center gap-3">
             <ModeToggle />
             <CustomButton name="upload chat" href="/upload" />
           </div>
 
+          {/* Show this only on mobile */}
           {isMobile && (
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>

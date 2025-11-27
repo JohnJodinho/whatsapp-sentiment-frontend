@@ -21,13 +21,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-// --- 1. Define Data Structure (Props) ---
-export interface SentimentKpiData {
-  overallScore: number;
-  positivePercent: number;
-  negativePercent: number;
-  neutralPercent: number;
-}
+
+import type { SentimentKpiData } from "@/types/sentimentDashboardData";
 
 interface SentimentKpiRowProps {
   isLoading: boolean;

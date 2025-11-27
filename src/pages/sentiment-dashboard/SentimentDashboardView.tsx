@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // --- Imports for Sentiment Dashboard ---
 import { HeaderBar } from "@/components/sentiment-dashboard/HeaderBar";
-import { FiltersCard, type SentimentFilterState } from "@/components/sentiment-dashboard/FiltersCard";
+import { FiltersCard } from "@/components/sentiment-dashboard/FiltersCard";
 
 // --- Import Actual Sentiment Chart Components ---
 import { SentimentKpiRow } from "@/components/sentiment-dashboard/SentimentKpiRow";
@@ -14,11 +14,11 @@ import { SentimentHourChart } from "@/components/sentiment-dashboard/SentimentHo
 import { SentimentHighlights } from "@/components/sentiment-dashboard/SentimentHighlights";
 
 // --- Import Sentiment API function and Data Types ---
-import { fetchSentimentDashboardData } from "@/lib/api";
+import { fetchSentimentDashboardData } from "@/lib/api/sentimentDashboardService";
 // Assuming SentimentDashboardData is defined in types.ts or api.ts
 // It should contain fields like: participants, kpiData, trendData, breakdownData, dayData, hourData, highlightsData
-import type { SentimentDashboardData } from "@/lib/api";
-
+import type { SentimentDashboardData, SentimentFilterState } from "@/types/sentimentDashboardData";
+import { saveSentimentDashboardData } from "@/utils/analyticsStore";
 
 interface SentimentDashboardViewProps {
   chatId: string; // Keep chatId if needed for API calls, though mock doesn't use it
@@ -40,11 +40,12 @@ export function SentimentDashboardView({ chatId }: SentimentDashboardViewProps) 
   useEffect(() => {
     setIsLoading(true);
     // --- Use Actual API Call ---
-    fetchSentimentDashboardData() // Pass chatId if your API needs it
+    fetchSentimentDashboardData(Number(chatId)) // Pass chatId if your API needs it
       .then((data) => {
         setSentimentData(data);
         setFilterOptions({ participants: data.participants }); // Get participants from data
         console.log("[Sentiment View] Initial data received:", data);
+        saveSentimentDashboardData(data);
       })
       .catch((error) => {
         console.error("Failed to fetch initial sentiment data:", error);
@@ -59,11 +60,12 @@ export function SentimentDashboardView({ chatId }: SentimentDashboardViewProps) 
   const handleApplyFilters = (filters: SentimentFilterState) => {
     setIsLoading(true);
     // --- Use Actual API Call ---
-    fetchSentimentDashboardData(filters) // Pass chatId if needed
+    fetchSentimentDashboardData(Number(chatId), filters) // Pass chatId if needed
       .then((data) => {
         setSentimentData(data);
         // Participants list (filterOptions) usually stays the same after initial load
         console.log("[Sentiment View] Filtered data received:", data);
+        saveSentimentDashboardData(data);
       })
       .catch((error) => {
         console.error("Failed to fetch filtered sentiment data:", error);

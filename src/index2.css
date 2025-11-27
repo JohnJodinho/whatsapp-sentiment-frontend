@@ -15,7 +15,7 @@
   --sentiment-positive: 134 60% 45%; /* Green */
   --sentiment-negative: 0 70% 50%;   /* Red */
   --sentiment-neutral: 45 80% 55%;   /* Yellow/Gold */
-
+  --hsl-muted-foreground: 240 5% 55%;
   /* Light mode defaults (matched to design) */
   --background: 0 0% 98%;            /* Off-white */
   --foreground: 240 10% 18%;         /* Dark grayish blue */
@@ -65,7 +65,7 @@
   --sentiment-positive: 134 50% 55%; /* Brighter Green for Dark */
   --sentiment-negative: 0 65% 60%;   /* Brighter Red for Dark */
   --sentiment-neutral: 45 70% 65%;
-
+  --hsl-muted-foreground: 240 5% 70%;
   /* Dark mode defaults (matched to design) */
   --background: 230 15% 15%;         /* Dark blue-gray */
   --foreground: 220 15% 90%;         /* Light grayish blue */

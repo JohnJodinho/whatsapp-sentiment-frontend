@@ -1,28 +1,22 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"; // Removed unused imports
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"; // Removed unused LabelList, Legend
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTheme } from "next-themes";
+import  { ChartContainer } from "@/components/ui/chart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { BreakdownDataPoint } from "@/types/sentimentDashboardData";
 
 
-// --- Data Structure ---
-interface BreakdownDataPoint {
-  name: string; // Participant name
-  Positive: number;
-  Negative: number;
-  Neutral: number;
-  total: number; // For sorting
-}
 
 interface SentimentBreakdownChartProps {
   isLoading: boolean;
   data: BreakdownDataPoint[] | null;
 }
 
-// --- Helper: Theme Colors ---
 function useChartColors() {
    const { theme } = useTheme();
    const [tickColor, setTickColor] = useState("#888888");
@@ -36,22 +30,23 @@ function useChartColors() {
    return { tickColor, gridColor };
  }
 
-// --- Main Component ---
 export function SentimentBreakdownChart({ isLoading, data }: SentimentBreakdownChartProps) {
   const { tickColor, gridColor } = useChartColors();
 
-  // Sort data by total messages descending
+  const [topN, setTopN] = useState<string>("All")
   const sortedData = useMemo(() => {
     if (!data) return [];
-    return [...data].sort((a, b) => b.total - a.total);
-  }, [data]);
+    const sortedData = [...data].sort((a, b) => b.total - a.total);
+    if (topN === "All"){
+      return sortedData
+    }
+    return sortedData.slice(0, parseInt(topN, 10));
+  }, [data, topN]);
 
-   // Handle Loading State
   if (isLoading) {
     return <ChartSkeleton  />;
   }
 
-  // Handle Empty State
   if (!sortedData || sortedData.length === 0) {
     return (
       <Card className="rounded-2xl border bg-card shadow-sm h-[400px] flex items-center justify-center">
@@ -60,10 +55,9 @@ export function SentimentBreakdownChart({ isLoading, data }: SentimentBreakdownC
     );
   }
 
-   // Dynamic height for scrolling (similar to ContributionChart)
-   const barHeight = 35; // Height per participant bar + padding
-   const chartHeight = Math.max(300, sortedData.length * barHeight); // Min height 300px
-   const viewportHeight = 300; // Fixed height of the scrollable area
+   const barHeight = 35;
+   const chartHeight = Math.max(300, sortedData.length * barHeight);
+  //  const viewportHeight = 300;
 
   return (
     <motion.div
@@ -71,70 +65,69 @@ export function SentimentBreakdownChart({ isLoading, data }: SentimentBreakdownC
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeInOut" }}
     >
-      <Card className="rounded-2xl border bg-card shadow-sm relative overflow-hidden h-[400px] flex flex-col">
+      <Card className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 h-[450px] flex flex-col">
         <CardHeader className="p-4 pb-2">
           <CardTitle className="text-base font-semibold">Sentiment by Participant</CardTitle>
           <CardDescription className="text-sm text-muted-foreground">
             Sentiment distribution for each participant.
           </CardDescription>
+          <Select value={topN} onValueChange={setTopN}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue placeholder="Show All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">Show All</SelectItem>
+              <SelectItem value="3">Top 3</SelectItem>
+              <SelectItem value="5">Top 5</SelectItem>
+              <SelectItem value="10">Top 10</SelectItem>
+              <SelectItem value="20">Top 20</SelectItem>
+              <SelectItem value="30">Top 30</SelectItem>
+            </SelectContent>
+          </Select>
         </CardHeader>
-         {/* Scrollable Content */}
-        <CardContent className="flex-1 overflow-y-auto pr-4" style={{ height: `${viewportHeight}px` }}>
-           <div style={{ height: `${chartHeight}px` }}> {/* Inner div sets scrollable height */}
-             <ResponsiveContainer width="100%" height="100%">
+        <CardContent className="h-[300px] w-full overflow-y-auto pr-4">
+          <ChartContainer config={{}} style={{ height: `${chartHeight}px`}} className="w-full">
+   
+             <ResponsiveContainer width="100%" height={chartHeight}>
                <BarChart
                  data={sortedData}
                  layout="vertical"
-                 stackOffset="expand" // Stacks bars to 100%
-                 margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+                 margin={{ right: 10, left: 10}}
                >
-                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} horizontal={false} />
+                 <CartesianGrid stroke={gridColor} strokeOpacity={0.6} horizontal={false} />
                  <XAxis
                    type="number"
-                   tick={{ fill: tickColor, fontSize: 11 }}
+                   tick={false}
                    tickLine={false}
                    axisLine={false}
-                   tickFormatter={(value) => `${(value * 100).toFixed(0)}%`} // Format as percentage
-                   domain={[0, 1]} // Ensure X-axis is 0-1 for percentage stack
                  />
                  <YAxis
                    dataKey="name"
                    type="category"
-                   tick={{ fill: tickColor, fontSize: 11 }}
+                   tick={{ fill: tickColor, fontSize: 12 }}
                    tickLine={false}
                    axisLine={false}
-                   width={80} // Adjust width for names
-                   tickFormatter={(value) => value.length > 10 ? `${value.substring(0, 8)}...` : value} // Truncate long names
+                   width={130}
+                   tickFormatter={(value) => value.length > 13 ? `${value.substring(0, 10)}...` : value}
                  />
                  <Tooltip
                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
                    content={({ active, payload, label }) => {
                      if (active && payload && payload.length) {
-                       // Find the original data point to get raw counts
                        const original = sortedData.find(d => d.name === label);
                        if (!original) return null;
-
-                       // Safely get percentage value for a given dataKey from payload
-                       const getPercent = (key: string) => {
-                         type PayloadItem = { dataKey?: string | number; value?: number | string | null };
-                         const items: PayloadItem[] = Array.isArray(payload) ? (payload as PayloadItem[]) : [];
-                         const item = items.find((p) => String(p.dataKey) === key);
-                         const val = item?.value ?? 0;
-                         const num = typeof val === "number" ? val : Number(val ?? 0);
-                         return `${Math.round(num * 100)}%`;
-                       };
 
                        return (
                          <div className="rounded-lg border bg-card/90 p-2 shadow-sm backdrop-blur-sm text-xs">
                            <p className="font-bold mb-1">{label}</p>
                            <p style={{ color: 'hsl(var(--sentiment-positive))' }}>
-                             Positive: {original.Positive.toLocaleString()} ({getPercent('Positive')})
+                             Positive: {original.Positive.toLocaleString()}
                            </p>
                             <p style={{ color: 'hsl(var(--sentiment-negative))' }}>
-                             Negative: {original.Negative.toLocaleString()} ({getPercent('Negative')})
+                             Negative: {original.Negative.toLocaleString()}
                            </p>
                             <p style={{ color: 'hsl(var(--sentiment-neutral))' }}>
-                             Neutral: {original.Neutral.toLocaleString()} ({getPercent('Neutral')})
+                             Neutral: {original.Neutral.toLocaleString()}
                            </p>
                          </div>
                        );
@@ -142,21 +135,18 @@ export function SentimentBreakdownChart({ isLoading, data }: SentimentBreakdownC
                      return null;
                    }}
                  />
-                 {/* Legend can be added if needed */}
-                 {/* <Legend /> */}
-                 <Bar dataKey="Positive" stackId="a" fill="hsl(var(--sentiment-positive))" radius={[0, 4, 4, 0]} barSize={16}/>
-                 <Bar dataKey="Negative" stackId="a" fill="hsl(var(--sentiment-negative))" radius={[0, 4, 4, 0]} barSize={16}/>
-                 <Bar dataKey="Neutral" stackId="a" fill="hsl(var(--sentiment-neutral))" radius={[0, 4, 4, 0]} barSize={16}/>
+                 <Bar dataKey="Positive" stackId="a" fill="hsl(var(--sentiment-positive))" />
+                 <Bar dataKey="Negative" stackId="a" fill="hsl(var(--sentiment-negative))" />
+                 <Bar dataKey="Neutral" stackId="a" fill="hsl(var(--sentiment-neutral))" radius={[0, 8, 8, 0]}/>
                </BarChart>
              </ResponsiveContainer>
-           </div>
+           </ChartContainer>
         </CardContent>
       </Card>
     </motion.div>
   );
 }
 
-// Reusable Skeleton (can be defined once and imported)
 function ChartSkeleton() {
   return (
     <Card className="rounded-2xl border bg-card shadow-sm h-[400px] p-4">
@@ -168,3 +158,5 @@ function ChartSkeleton() {
     </Card>
   );
 }
+
+export default SentimentBreakdownChart;
