@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Separator } from "@/components/ui/separator";
+// import { Separator } from "@/components/ui/separator";
 import {
   MessageSquareText,
   GaugeCircle,
@@ -232,7 +232,7 @@ export default function HomePage() {
             Ready to decode your conversations?
           </h2>
           <p className="text-white/80 text-lg mb-10 max-w-2xl mx-auto">
-            Experience the power of RAG-based analysis. Upload your chat, ask questions, and get clarity—securely.
+            Experience the power of RAG-based analysis. Upload your chat, ask questions, and get clarity securely.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

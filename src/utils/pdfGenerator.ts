@@ -1,4 +1,4 @@
-// src/utils/pdfGenerator.ts
+
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -12,17 +12,10 @@ export const downloadDashboardPDF = async (elementId: string, fileName: string =
   }
 
   try {
-    // 1. Generate the image using html-to-image
-    // cacheBust: true helps prevents CORS issues with external images
-    // pixelRatio: 2 ensures high quality (Retina)
     const dataUrl = await toPng(element, { 
       cacheBust: true, 
       pixelRatio: 2,
-      backgroundColor: "#ffffff", // Ensure white background
-    //   filter: (node) => {
-    //     // Exclude elements with the 'no-print' class
-    //     return !node.classList?.contains('no-print');
-    //   }
+      backgroundColor: "#ffffff",
     });
 
     // 2. Load image to calculate dimensions

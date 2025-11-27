@@ -17,6 +17,7 @@ interface CurrentChatInfo {
 
 const CHAT_STORAGE_KEY = "current_chat";
 
+
 export default function SentimentDashboardPage() {
   const [chatId, setChatId] = useState<string | null>(null);
   const [sentimentStatus, setSentimentStatus] = useState<SentimentStatus>("checking");

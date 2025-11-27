@@ -1,46 +1,66 @@
 import { Button } from "@/components/ui/button";
-import { Filter, SlidersHorizontal } from "lucide-react";
+import { Filter,  Download} from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 interface HeaderBarProps {
   onToggleFilters: () => void;
   isFiltersOpen: boolean;
+  onDownload: () => void;
+  isLoading?: boolean;
 }
 
-export function HeaderBar({ onToggleFilters, isFiltersOpen }: HeaderBarProps) {
+export function HeaderBar({ 
+  onToggleFilters, 
+  isFiltersOpen,
+  onDownload,
+  isLoading
+}: HeaderBarProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0 sm:space-x-4">
+    <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
       {/* Dashboard Title */}
-      <h1 className="text-2xl font-bold tracking-tight text-foreground">
-        Sentiment Analysis Dashboard ✨
-      </h1>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          Sentiment Analysis Dashboard ✨
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Emotional tone and engagement metrics breakdown.
+        </p>
+      </div>
 
       {/* Action Buttons */}
       <div className="flex items-center space-x-2">
         {/* Toggle Filters Button */}
         <Button
           variant="outline"
-          size="sm"
-          onClick={onToggleFilters}
-          aria-expanded={isFiltersOpen}
-          className="flex items-center"
-        >
-          {isFiltersOpen ? (
-            <SlidersHorizontal className="mr-2 h-4 w-4" />
-          ) : (
-            <Filter className="mr-2 h-4 w-4" />
+          className={cn(
+            "rounded-xl transition-all hover:scale-105 hover:shadow-sm",
+            isFiltersOpen && "ring-2 ring-ring ring-offset-2 ring-offset-background"
           )}
-          Filters
+          aria-label="Toggle filters panel"
+          onClick={onToggleFilters} // 3. Call the function from the parent
+        >
+          <Filter className="w-4 h-4 mr-2" />
+          {isFiltersOpen ? "Hide Filters" : "Filters"}
         </Button>
 
-        {/* Optional: Add other buttons like Download later if needed */}
-        {/* <Button
-          variant="default" // Or your gradient style
-          size="sm"
-          className="flex items-center bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))] text-white"
+        <Button
+          className="rounded-xl flex-1 xl:flex-none text-white bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))] transition-all hover:scale-105 hover:shadow-lg disabled:opacity-70"
+          aria-label="Download dashboard as PDF"
+          onClick={onDownload}
+          disabled={isLoading}
         >
-          <Download className="mr-2 h-4 w-4" />
-          Download Report
-        </Button> */}
+          {isLoading ? (
+            <span className="flex items-center">
+              <span className="animate-spin mr-2">⏳</span> Generating...
+            </span>
+          ) : (
+            <>
+              <Download className="w-4 h-4 mr-2" />
+              Download Report PDF
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );
