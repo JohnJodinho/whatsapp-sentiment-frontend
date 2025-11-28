@@ -1,0 +1,120 @@
+components.json
+eslint.config.js
+index.html
+package.json
+README.md
+tailwind.config.js
+tsconfig.app.json
+tsconfig.json
+tsconfig.node.json
+vite.config.ts
+public/
+    assets/
+src/
+    App.css
+    App.tsx
+    index.css
+    main.tsx
+    assets/
+    components/
+        Footer.tsx
+        mode-toggle.tsx
+        Navbar.tsx
+        theme-provider.tsx
+        chat/
+            ChatHeader.tsx
+            ChatInput.tsx
+            ChatMessage.tsx
+            ChatMessages.tsx
+            ChatPanel.tsx
+            ChatUI.tsx
+            CitationViewer.tsx
+            DefaultState.tsx
+        custom-ui/
+            projectbutton.tsx
+        dashboard/
+            ActivityChart.tsx
+            ContributionChart.tsx
+            ContributionPieChart.tsx
+            FiltersCard2.tsx
+            HeaderBar.tsx
+            KPICardsRow2.tsx
+            MessagesOverTimeChart2.tsx
+            OptionalInsights2.tsx
+            ParticipantCharts2.tsx
+            TimelineTable2.tsx
+        sentiment-dashboard/
+            FiltersCard.tsx
+            HeaderBar.tsx
+            SentimentBreakdownChart.tsx
+            SentimentDayChart.tsx
+            SentimentHighlights.tsx
+            SentimentHourChart.tsx
+            SentimentKpiRow.tsx
+            SentimentTrendChart.tsx
+        ui/
+            accordion.tsx
+            alert.tsx
+            avatar.tsx
+            badge.tsx
+            button.tsx
+            calendar.tsx
+            card.tsx
+            carousel.tsx
+            chart.tsx
+            collapsible.tsx
+            command.tsx
+            dialog.tsx
+            dropdown-menu.tsx
+            hover-card.tsx
+            input.tsx
+            label.tsx
+            popover.tsx
+            progress.tsx
+            select.tsx
+            separator.tsx
+            sheet.tsx
+            skeleton.tsx
+            sonner.tsx
+            textarea.tsx
+            toggle-group.tsx
+            toggle.tsx
+            tooltip.tsx
+        upload/
+            CheckSentimentsButton.tsx
+            DecorativeCloudIcon.tsx
+            DecorativeSpeechBubble.tsx
+            DeleteChatButton.tsx
+            DeleteChatModal.tsx
+            FilePreview.tsx
+            PrimaryCTA.tsx
+            UploadCard.tsx
+            ...
+    layouts/
+        MainLayout.tsx
+    lib/
+        message-sentiments-mock-data-0.json
+        mock-data_1.json
+        mock-data.json
+        segment-sentiments-mock-data0.json
+        utils.ts
+        whatsappUtils.ts
+        zipUtils.ts
+        api/
+            ...
+        hooks/
+            ...
+    pages/
+        chat/
+        dashboard/
+        home/
+        sentiment-dashboard/
+        upload/
+    types/
+        chat.ts
+        dasboardData.ts
+        sentimentDashboardData.ts
+        sentimentProgress.ts
+    utils/
+        analyticsStore.ts
+        pdfGenerator.ts
