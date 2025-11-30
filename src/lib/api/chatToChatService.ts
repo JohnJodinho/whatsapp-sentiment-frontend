@@ -1,10 +1,11 @@
 import type {  QueryPayload, QueryResponse, RawHistoryItem } from "@/types/chat";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8500/api/v1";
+
 import { apiClient } from "@/lib/api/apiClient";
 import { toast } from "sonner";
 
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8500/api/v1";
+console.log(`The API BASE URL IS: ${API_BASE_URL}`);  
 
 export async function sendQuery(
   chatId: string,

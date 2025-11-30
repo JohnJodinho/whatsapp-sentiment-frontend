@@ -4,6 +4,8 @@ import { apiClient } from "./apiClient";
 // You should use environment variables for this, e.g., import.meta.env.VITE_API_URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8500/api/v1";
 
+
+console.log(`The API BASE URL IS: ${API_BASE_URL}`); 
 /**
  * Creates and manages a Server-Sent Event (SSE) connection to monitor 
  * sentiment analysis progress.

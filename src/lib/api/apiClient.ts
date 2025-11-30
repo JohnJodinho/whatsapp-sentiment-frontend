@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8500/api/v1";
-
+console.log(`The API BASE URL IS: ${API_BASE_URL}`)
 const CHAT_STORAGE_KEY = "current_chat";
 
 export const apiClient = axios.create({
