@@ -6,63 +6,68 @@ import { Send, Loader2 } from "lucide-react";
 
 interface ChatInputProps {
   isLoading: boolean;
+  isHistoryLoading?: boolean; // New prop
   onSend: (message: string) => void;
-  // onClear prop is removed
 }
 
-export function ChatInput({ isLoading, onSend }: ChatInputProps) {
+export function ChatInput({ isLoading, isHistoryLoading = false, onSend }: ChatInputProps) {
   const [input, setInput] = useState("");
 
   const handleSend = () => {
-    if (input.trim() && !isLoading) {
+    if (input.trim() && !isLoading && !isHistoryLoading) {
       onSend(input);
-      setInput(""); // Clear input after sending
+      setInput(""); 
     }
   };
 
-  // Handles Enter to send and Shift+Enter for newlines
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault(); // Prevent default newline
+      e.preventDefault(); 
       handleSend();
     }
   };
+
+  // Determine placeholder and disabled state
+  const isInputDisabled = isLoading || isHistoryLoading;
+  const placeholderText = isHistoryLoading 
+    ? "Initializing chat history..." 
+    : "Ask about your chat or dashboard insights...";
 
   return (
     <motion.div
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="p-4 flex items-start gap-3 rounded-b-2xl"
+      className="p-3 md:p-4 flex items-end gap-2 md:gap-3" // Adjusted alignment for multiline
     >
-      {/* Clear Chat Button (Trash2) is removed */}
-
-      {/* Text Input Area */}
       <Textarea
         value={input}
         onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Ask about your chat or dashboard insights..."
+        placeholder={placeholderText}
         rows={1}
-        className="flex-1 rounded-xl bg-muted/40 border border-border px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[hsl(var(--mint))] focus:border-transparent resize-none overflow-y-auto scrollbar-thin"
-        disabled={isLoading}
+        // Mobile: text-base (16px) prevents zoom. Desktop: text-sm
+        className="flex-1 min-h-[44px] max-h-[120px] rounded-2xl bg-muted/40 border border-border px-4 py-3 
+                   text-base md:text-sm placeholder:text-muted-foreground 
+                   focus:outline-none focus:ring-2 focus:ring-[hsl(var(--mint))] focus:border-transparent 
+                   resize-none overflow-y-auto scrollbar-thin"
+        disabled={isInputDisabled}
       />
 
-      {/* Send Button */}
       <Button
-        className="rounded-xl px-4 py-2 bg-gradient-to-r from-[hsl(var(--mint))] via-[hsl(var(--cyan-accent))] to-[hsl(var(--blue-accent))] text-white font-medium shadow hover:opacity-90 transition-all duration-200"
-        disabled={input.trim() === "" || isLoading}
+        className={`rounded-xl px-4 h-[44px] bg-gradient-to-r from-[hsl(var(--mint))] via-[hsl(var(--cyan-accent))] to-[hsl(var(--blue-accent))] 
+                   text-white font-medium shadow hover:opacity-90 transition-all duration-200 
+                   ${input.trim() === "" && !isLoading ? 'opacity-70' : 'opacity-100'}`}
+        disabled={input.trim() === "" || isInputDisabled}
         onClick={handleSend}
       >
-        {isLoading ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+        {isLoading || isHistoryLoading ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
         ) : (
-          <>
-            <Send className="w-4 h-4 mr-1" />
-            <span className="hidden sm:inline">Send</span>
-          </>
+          <Send className="w-5 h-5 md:mr-1" />
         )}
         <span className="sr-only">Send message</span>
+        <span className="hidden md:inline">Send</span>
       </Button>
     </motion.div>
   );

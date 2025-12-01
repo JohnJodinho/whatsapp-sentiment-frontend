@@ -2,7 +2,7 @@ import type { ProgressData, ErrorData } from "@/types/sentimentProgress"; // Cre
 import { apiClient } from "./apiClient";
 // IMPORTANT: Set this to your actual backend URL
 // You should use environment variables for this, e.g., import.meta.env.VITE_API_URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8500/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://192.168.105.179:8000/api/v1";
 
 
 console.log(`The API BASE URL IS: ${API_BASE_URL}`); 

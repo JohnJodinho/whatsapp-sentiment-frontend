@@ -5,41 +5,70 @@ import { formatBytes } from "@/lib/utils";
 
 interface FilePreviewProps {
   file: File;
-  isValidExport: boolean | null; // null while checking
+  isValidExport: boolean | null;
   onRemove: () => void;
 }
 
 export function FilePreview({ file, isValidExport, onRemove }: FilePreviewProps) {
   return (
     <div
-      className="w-full p-6 min-h-[140px] border-2 border-dashed border-[color:hsl(var(--mint))]/40 rounded-[18px]
-                 bg-background/50 dark:bg-muted/20 flex items-center justify-between gap-6"
+      className="w-full group relative overflow-hidden rounded-2xl border border-border/50 bg-background/50 backdrop-blur-sm shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
     >
-      <div className="flex items-center gap-4 flex-1 min-w-0">
-        <FileText className="w-10 h-10 text-[hsl(var(--mint))]" />
-        <div className="flex flex-col min-w-0">
-          <p className="font-semibold text-foreground truncate" title={file.name}>
+      {/* Progress Bar / Status Indicator Strip */}
+      <div className={cn(
+        "absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300",
+        isValidExport === true ? "bg-[hsl(var(--mint))]" : 
+        isValidExport === false ? "bg-destructive" : "bg-muted"
+      )} />
+
+      <div className="flex items-center gap-4 p-4 pl-5">
+        
+        {/* Icon */}
+        <div className={cn(
+          "flex items-center justify-center w-12 h-12 rounded-xl shrink-0 transition-colors",
+          isValidExport === true ? "bg-[hsl(var(--mint))]/10 text-[hsl(var(--mint))]" : "bg-muted text-muted-foreground"
+        )}>
+          <FileText className="w-6 h-6" />
+        </div>
+
+        {/* Text Details */}
+        <div className="flex flex-col min-w-0 flex-1 gap-0.5">
+          <p className="font-semibold text-foreground truncate text-base leading-tight">
             {file.name}
           </p>
-          <span className="text-sm text-muted-foreground">{formatBytes(file.size)}</span>
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-4">
-        {isValidExport !== null && (
-          <div className={cn(
-            "flex items-center gap-2 text-sm font-medium px-3 py-1 rounded-full",
-            isValidExport 
-              ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300" 
-              : "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
-          )}>
-            {isValidExport ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
-            <span>{isValidExport ? "Valid WhatsApp export" : "Invalid export"}</span>
+          
+          <div className="flex items-center gap-2 text-sm">
+             <span className="text-muted-foreground font-medium tabular-nums text-xs">
+               {formatBytes(file.size)}
+             </span>
+             
+             {isValidExport !== null && (
+               <>
+                 <span className="text-muted-foreground/30">•</span>
+                 <span className={cn(
+                   "flex items-center gap-1.5 font-medium text-xs",
+                   isValidExport ? "text-green-600 dark:text-green-400" : "text-destructive"
+                 )}>
+                   {isValidExport ? (
+                     <>Valid Export <CheckCircle2 className="w-3.5 h-3.5" /></>
+                   ) : (
+                     <>Invalid File <AlertTriangle className="w-3.5 h-3.5" /></>
+                   )}
+                 </span>
+               </>
+             )}
           </div>
-        )}
-        
-        <Button onClick={onRemove} variant="ghost" size="icon" aria-label="Remove uploaded file">
-          <X className="w-5 h-5" />
+        </div>
+
+        {/* Big Touch Target Close Button */}
+        <Button 
+          onClick={onRemove} 
+          variant="ghost" 
+          size="icon" 
+          className="h-12 w-12 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors -mr-2"
+          aria-label="Remove file"
+        >
+          <X className="w-6 h-6" />
         </Button>
       </div>
     </div>

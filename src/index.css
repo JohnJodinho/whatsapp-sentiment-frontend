@@ -240,20 +240,23 @@
   animation: float-slow 3s ease-in-out infinite;
 }
 /* Animate SheetContent based on [data-state] */
+/* 1. Slower, smoother Slide In (0.5s + Custom Easing) */
 [data-state="open"][data-side="right"] {
-  animation: slide-in-from-right 0.3s ease-out forwards;
+  /* cubic-bezier(0.32, 0.72, 0, 1) mimics a native iOS slide */
+  animation: slide-in-from-right 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
+/* 2. Slower Slide Out */
 [data-state="closed"][data-side="right"] {
-  animation: slide-out-to-right 0.3s ease-in forwards;
+  animation: slide-out-to-right 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
-[data-state="open"][data-side="bottom"] {
-  animation: slide-in-from-bottom 0.3s ease-out forwards;
+/* 3. Match the Overlay Fade speed so they sync up */
+[data-state="open"].sheet-overlay {
+  animation: fade-in 0.5s ease-out forwards;
 }
-
-[data-state="closed"][data-side="bottom"] {
-  animation: slide-out-to-bottom 0.3s ease-in forwards;
+[data-state="closed"].sheet-overlay {
+  animation: fade-out 0.4s ease-in forwards;
 }
 
 /* Animate overlay fade */

@@ -1,6 +1,6 @@
 
 import React from "react"
-import { useLocation } from "react-router-dom" // 👈 Import the useLocation hook
+import { useLocation } from "react-router-dom" 
 import { Navbar } from "@/components/Navbar"
 import { Footer } from "@/components/Footer"
 import { Toaster } from "@/components/ui/sonner"
@@ -11,18 +11,16 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
-  
-  // Check if the current path is the homepage ('/')
+
   const isHomePage = location.pathname === '/';
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground transition-colors">
+    <div className="flex flex-col min-h-dvh bg-background text-foreground transition-colors overflow-x-hidden">
       <Navbar />
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-[100vw] overflow-x-hidden">
         {children}
       </main>
       
-      {/* 👇 Conditionally render the Footer if it's NOT the homepage */}
       {!isHomePage && <Footer />}
       <Toaster />
     </div>

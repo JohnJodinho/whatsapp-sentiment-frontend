@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Card, CardContent, CardFooter, CardTitle, CardDescription, CardHeader } from "@/components/ui/card"; // Import card parts
+import { Card, CardContent, CardFooter, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -23,21 +23,16 @@ interface OptionalInsightsProps {
   isLoading: boolean;
 }
 
-// --- Helper: Theme Colors & Chart Ticks ---
 function useChartColors() {
     const { theme } = useTheme();
-    const [tickColor, setTickColor] = useState("#6B7280"); // Use exact hex
-    const [gridColor, setGridColor] = useState("rgba(15, 23, 42, 0.06)"); // Use exact rgba
+    const [tickColor, setTickColor] = useState("#6B7280");
+    const [gridColor, setGridColor] = useState("rgba(15, 23, 42, 0.06)");
 
     useEffect(() => {
-        // Re-read CSS variables if needed, though hex values are provided
         const computedTickColor = getComputedStyle(document.documentElement).getPropertyValue('--muted-foreground').trim();
         const computedGridColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim();
-
-        // Update if needed, otherwise stick to provided hex/rgba
         setTickColor(computedTickColor ? `hsl(${computedTickColor})` : "#6B7280");
         setGridColor(computedGridColor ? `hsla(${computedGridColor}, 0.5)` : "rgba(15, 23, 42, 0.06)");
-
     }, [theme]);
 
     return { tickColor, gridColor };
@@ -45,10 +40,7 @@ function useChartColors() {
 
 const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
-    // The inner 'payload' property on a tooltip item contains the original data point.
-    // We can safely cast it to our HourData type.
     const data: HourData = payload[0].payload;
-
     return (
       <div className="p-2 text-sm bg-background border border-border rounded-lg shadow-lg">
         <p className="font-bold text-foreground mb-1">{`${data.hour}:00 - ${data.hour + 1}:00`}</p>
@@ -100,7 +92,7 @@ const weeklyChartConfig = {
 } satisfies ChartConfig;
 
 const hourlyChartConfig = {
-  messages: { label: "Messages", color: "hsl(var(--mint))" }, // Using CSS var for bar fill base
+  messages: { label: "Messages", color: "hsl(var(--mint))" }, 
 } satisfies ChartConfig;
 
 
@@ -112,51 +104,42 @@ function ActivityByDayChart({
     isLoading: boolean;
 }) {
   const id = "pie-activity-by-day";
-  
   const [activeDay, setActiveDay] = useState<string | null>(null);
-  const isMobile = useMediaQuery("(max-width: 768px)"); // Check for mobile
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
-    // This useEffect now processes the `data` prop to set the default active day
     useEffect(() => {
-   // Data is now passed as a prop, already processed with 'fill'
         if (data && data.length > 0) {
             const maxDay = data.reduce((max, current) => (current.messages > max.messages ? current : max));
             setActiveDay(maxDay.day);
         } else {
-            setActiveDay(null); // Reset if data is empty
+            setActiveDay(null);
         }
-    }, [data]); // Runs when the data prop changes
+    }, [data]);
 
   const activeIndex = React.useMemo(() => data?.findIndex((item) => item.day === activeDay) ?? -1, [activeDay, data]);
   const days = React.useMemo(() => data?.map((item) => item.day) ?? [], [data]);
   const totalMessages = React.useMemo(() => data?.reduce((acc, curr) => acc + curr.messages, 0) ?? 0, [data]);
 
-  // Handle single day scenario (e.g., from date filter) - adjust as needed based on actual filtering logic
   const singleDayData = data?.length === 1 ? data[0] : null;
   const showDropdown = days.length > 1;
 
-  // Define responsive radii
-  const outerRadius = isMobile ? 90 : 120;
-  const innerRadius = isMobile ? 44 : 60;
+  const outerRadius = isMobile ? 80 : 120; // Slightly reduced for mobile safety
+  const innerRadius = isMobile ? 40 : 60;
+  
   if (isLoading) return <Skeleton className="h-[360px] rounded-xl bg-muted/30" />;
   if (!data || data.length === 0) return <EmptyState message="No activity data." icon={PieChartIcon} />;
 
   const ActiveShape = (props: PieSectorDataItem) => {
-    // Note: Recharts props might not directly match CSS box-shadow. Using filter for SVG glow.
     return (
       <g style={{ filter: `drop-shadow(0 4px 12px ${props.fill}30)` }}>
-        <Sector {...props} outerRadius={outerRadius + 10} stroke="#FFFFFF" strokeWidth={3} />
-        {/* Optional: Add a subtle outer ring if needed */}
-        {/* <Sector {...props} outerRadius={outerRadius + 15} innerRadius={outerRadius + 11} fill={props.fill} fillOpacity={0.3}/> */}
+        <Sector {...props} outerRadius={outerRadius + 8} stroke="#FFFFFF" strokeWidth={3} />
       </g>
     );
   };
 
   return (
-    // Updated card structure with explicit header/content areas
     <Card data-chart={id} className="rounded-2xl border border-border bg-card p-0 flex flex-col shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 overflow-hidden">
       <ChartStyle id={id} config={weeklyChartConfig} />
-      {/* Card Header */}
       <CardHeader>
       <div className="flex items-start justify-between p-4 border-b border-border/50">
 
@@ -168,7 +151,7 @@ function ActivityByDayChart({
         {showDropdown && (
           <div className="ml-4">
             <Select value={activeDay ?? ""} onValueChange={setActiveDay}>
-              <SelectTrigger className="h-8 w-[120px] rounded-lg pl-2.5 text-xs" aria-label="Select a day">
+              <SelectTrigger className="h-8 w-[110px] rounded-lg pl-2.5 text-xs" aria-label="Select a day">
                 <SelectValue placeholder="Select day" />
               </SelectTrigger>
               <SelectContent align="end" className="rounded-xl">
@@ -191,29 +174,25 @@ function ActivityByDayChart({
       </div>
       </CardHeader>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 px-4 pt-3 pb-1 justify-center">
+      {/* Legend with better mobile wrapping */}
+      <div className="flex flex-wrap gap-x-3 gap-y-2 px-4 pt-3 pb-1 justify-center">
           {Object.entries(weeklyChartConfig)
-            .filter(([key]) => key !== 'messages') // Exclude the generic 'messages' config
+            .filter(([key]) => key !== 'messages')
             .map(([key, config]) => {
-                // Safely access color (some entries like 'messages' do not have color).
-                // Use a fallback color to be defensive against unexpected shapes.
                 const color = (config as { color?: string }).color ?? "#94A3B8";
                 return (
-                  <div key={key} className="flex items-center gap-1.5 text-xs">
-                      <span className="flex h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: color }} />
+                  <div key={key} className="flex items-center gap-1.5 text-[10px] sm:text-xs">
+                      <span className="flex h-2 w-2 shrink-0 rounded-sm" style={{ backgroundColor: color }} />
                       <span className="text-muted-foreground">{config.label}</span>
                   </div>
                 );
             })}
       </div>
 
-
-      {/* Chart Content */}
       <CardContent className="flex items-center justify-center py-6 relative">
         <ChartContainer
           id={id} config={weeklyChartConfig}
-          className="w-full max-w-[340px] aspect-square flex items-center justify-center" // Centering container
+          className="w-full max-w-[340px] aspect-square flex items-center justify-center"
           aria-label="Activity by day donut chart" role="img"
         >
           <ResponsiveContainer height="100%" width="100%">
@@ -233,7 +212,7 @@ function ActivityByDayChart({
               <Pie
                 data={data} dataKey="messages" nameKey="day"
                 innerRadius={innerRadius} outerRadius={outerRadius}
-                paddingAngle={1} stroke="#FFFFFF" strokeWidth={1} // White separation
+                paddingAngle={1} stroke="#FFFFFF" strokeWidth={1}
                 activeIndex={activeIndex}
                 activeShape={ActiveShape}
               >
@@ -248,13 +227,13 @@ function ActivityByDayChart({
 
                       return (
                         <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle" className="fill-current">
-                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 18} className="text-2xl font-bold" style={{ fill: valueColor }}>
+                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 16} className="text-xl sm:text-2xl font-bold" style={{ fill: valueColor }}>
                             {displayValue.toLocaleString()}
                           </tspan>
-                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 7} className="text-sm fill-muted-foreground">
+                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 6} className="text-xs sm:text-sm fill-muted-foreground">
                             {displayLabel}
                           </tspan>
-                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 27} className="text-sm fill-muted-foreground">
+                          <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="text-xs sm:text-sm fill-muted-foreground">
                             ({percentage}%)
                           </tspan>
                         </text>
@@ -271,8 +250,6 @@ function ActivityByDayChart({
   );
 }
 
-
-// --- 2. Hourly Activity Bar Chart ---
 function HourlyActivityChart({
     data,
     isLoading
@@ -303,95 +280,93 @@ function HourlyActivityChart({
   if (!data || data.length === 0)
   return <EmptyState message="No hourly data available." icon={BarChart3Icon} />;
   
-  
-  
   return (
     <Card className="rounded-2xl border border-border bg-card p-0 flex flex-col shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 overflow-hidden">
         <CardHeader>
           <div className="p-4 border-b border-border/50">
-              <CardTitle className="text-base font-semibold text-foreground">When is the Chat Most Active?</CardTitle>
-              <CardDescription className="text-sm text-muted-foreground">Discover the peak hours and quiet times in your conversation.</CardDescription>
+              <CardTitle className="text-base font-semibold text-foreground">Peak Chat Activity</CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">Peak hours and quiet times.</CardDescription>
           </div>
         </CardHeader>
 
-        {/* Chart Content */}
-        <CardContent className="flex-1 flex justify-center p-0 relative pt-4">
-            <ChartContainer config={hourlyChartConfig} className="w-full min-h-[400px]" aria-label="Hourly activity bar chart" role="img">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                    accessibilityLayer
-                    data={data}
-                    margin={{ top: 25, left: 10, right: -3, bottom: 0 }} // Increased top margin for labels
-                    onMouseMove={(state) => {
-                        if (state.isTooltipActive && state.activeTooltipIndex !== undefined) {
-                            setHoveredBarIndex(state.activeTooltipIndex);
-                        } else {
-                            setHoveredBarIndex(null);
-                        }
-                    }}
-                    onMouseLeave={() => setHoveredBarIndex(null)}
-                >
-                    <defs>
-                        <linearGradient id="hourGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="hsl(var(--mint))" stopOpacity={0.8} />
-                            <stop offset="100%" stopColor="hsl(var(--cyan-accent))" stopOpacity={0.4} /> {/* Mint to Cyan */}
-                        </linearGradient>
-                    </defs>
-                    <CartesianGrid stroke={gridColor} horizontal={true} vertical={false} />
-                    <XAxis
-                        dataKey="hour"
-                        tickLine={false} tickMargin={8} axisLine={false}
-                        tick={{ fill: tickColor, fontSize: 11 }}
-                        tickFormatter={(value) => `${value}h`}
-                        interval={2}
-                    />
-                    <YAxis hide={true} domain={['auto', 'dataMax + 20']} /> {/* Hide Y axis but give padding for labels */}
-                    <ChartTooltip
-                        cursor={false}
-                        content={CustomTooltip}
-                    />
-                    <Bar
-                        dataKey="messages"
-                        fill="url(#hourGradient)"
-                        radius={[8, 8, 0, 0]} // Rounded top corners
-                        barSize={22} // Bar width
+        {/* Chart Content with horizontal scroll fix for very small screens */}
+        <CardContent className="flex-1 flex justify-center p-0 relative pt-4 overflow-hidden">
+             <div className="w-full overflow-x-auto">
+                <ChartContainer config={hourlyChartConfig} className="w-full min-w-[320px] min-h-[300px]" aria-label="Hourly activity bar chart" role="img">
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart
+                        accessibilityLayer
+                        data={data}
+                        margin={{ top: 25, left: 0, right: 0, bottom: 0 }}
+                        onMouseMove={(state) => {
+                            if (state.isTooltipActive && state.activeTooltipIndex !== undefined) {
+                                setHoveredBarIndex(state.activeTooltipIndex);
+                            } else {
+                                setHoveredBarIndex(null);
+                            }
+                        }}
+                        onMouseLeave={() => setHoveredBarIndex(null)}
                     >
-                        {data.map((entry, index) => (
-                           <Cell
-                             key={`cell-${index}`}
-                             stroke={hoveredBarIndex === index || (peakHourData && entry.hour === peakHourData.hour) ? 'hsl(var(--mint))' : 'none'}
-                             strokeWidth={hoveredBarIndex === index || (peakHourData && entry.hour === peakHourData.hour) ? 1.5 : 0}
-                             strokeOpacity={0.8}
-                           />
-                         ))}
-                        <LabelList
-                            dataKey="messages"
-                            position="top" 
-                            offset={labelOffset}
-                            angle={useVerticalLabels ? -90 : 0}
-                            style={{ fill: 'var(--color-foreground)', fontSize: 12 }}
-                            formatter={(value: number) => value > 0 ? value.toLocaleString() : ""}
+                        <defs>
+                            <linearGradient id="hourGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="hsl(var(--mint))" stopOpacity={0.8} />
+                                <stop offset="100%" stopColor="hsl(var(--cyan-accent))" stopOpacity={0.4} /> 
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={gridColor} horizontal={true} vertical={false} />
+                        <XAxis
+                            dataKey="hour"
+                            tickLine={false} tickMargin={8} axisLine={false}
+                            tick={{ fill: tickColor, fontSize: 10 }}
+                            tickFormatter={(value) => `${value}h`}
+                            interval={2}
                         />
-                    </Bar>
-                </BarChart>
-              </ResponsiveContainer>  
-            </ChartContainer>
+                        <YAxis hide={true} domain={['auto', 'dataMax + 20']} /> 
+                        <ChartTooltip
+                            cursor={false}
+                            content={CustomTooltip}
+                        />
+                        <Bar
+                            dataKey="messages"
+                            fill="url(#hourGradient)"
+                            radius={[8, 8, 0, 0]} 
+                            barSize={18} 
+                        >
+                            {data.map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                stroke={hoveredBarIndex === index || (peakHourData && entry.hour === peakHourData.hour) ? 'hsl(var(--mint))' : 'none'}
+                                strokeWidth={hoveredBarIndex === index || (peakHourData && entry.hour === peakHourData.hour) ? 1.5 : 0}
+                                strokeOpacity={0.8}
+                              />
+                            ))}
+                            <LabelList
+                                dataKey="messages"
+                                position="top" 
+                                offset={labelOffset}
+                                angle={useVerticalLabels ? -90 : 0}
+                                style={{ fill: 'var(--color-foreground)', fontSize: 10 }}
+                                formatter={(value: number) => value > 0 ? value.toLocaleString() : ""}
+                            />
+                        </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>  
+                </ChartContainer>
+            </div>
         </CardContent>
 
-        {/* Footer Summary */}
-        <CardFooter className="flex-col items-start gap-1 text-xs text-muted-foreground p-4 border-t border-border/50">
+        <CardFooter className="flex-col items-start gap-1 text-xs text-muted-foreground p-4 border-t border-border/50 bg-muted/5">
           {peakHourData && peakHourData.messages > 0 && (
             <div className="flex items-center gap-2 font-medium text-foreground">
-              Peak hour: {peakHourData.hour}:00 – {peakHourData.hour + 1}:00 ({peakHourData.messages} messages)
+              Peak: {peakHourData.hour}:00 – {peakHourData.hour + 1}:00 ({peakHourData.messages} msgs)
             </div>
           )}
-          <div>Total messages in range: {totalMessagesInRange.toLocaleString()}</div>
+          <div>Total in range: {totalMessagesInRange.toLocaleString()}</div>
         </CardFooter>
     </Card>
   );
 }
 
-// --- 3. Main Collapsible Container ---
 export function OptionalInsights({
     activityByDayData,
     hourlyActivityData,
@@ -406,7 +381,6 @@ export function OptionalInsights({
       transition={{ duration: 0.6, delay: 0.6, ease: "easeInOut" }}
     >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        {/* Adjusted outer card to use standard padding */}
         <Card className="rounded-2xl border bg-card shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
           <CollapsibleTrigger asChild>
             <div className="flex items-center justify-between px-6 py-4 border-b border-muted/50 cursor-pointer group">
@@ -424,8 +398,7 @@ export function OptionalInsights({
               transition={{ duration: 0.3, ease: "easeInOut" }}
               className="overflow-hidden"
             >
-              {/* Grid within the content area */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 sm:p-6">
                 <ActivityByDayChart data={activityByDayData} isLoading={isLoading} />
                 <HourlyActivityChart data={hourlyActivityData} isLoading={isLoading} />
               </div>
@@ -437,7 +410,6 @@ export function OptionalInsights({
   );
 }
 
-// --- 4. Reusable Empty State ---
 function EmptyState({ message = "No insights available yet.", icon: Icon = MessageSquare }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center p-4">

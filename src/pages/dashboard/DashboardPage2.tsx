@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FolderOpen, Upload, ShieldAlert, X, FileText, Calendar, MessageCircle } from "lucide-react";
+import { FolderOpen, Upload, ShieldAlert, X, FileText, Calendar, MessageCircle, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Utils & API
 import { fetchDashboardData } from "@/lib/api/dashboardService";
-import { saveGeneralDashboardData } from "@/utils/analyticsStore";
+import { saveGeneralDashboardData, getAnalyticsData } from "@/utils/analyticsStore";
 import { downloadDashboardPDF } from "@/utils/pdfGenerator"; 
 import type { DashboardData } from "@/types/dasboardData";
 
@@ -58,7 +58,6 @@ function ReportHeader({ data }: { data: DashboardData | null }) {
         </div>
       </div>
 
-      {/* Text Summary Section - The "Info" the user wanted */}
       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-slate-700 space-y-2">
         <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
           <FileText className="w-4 h-4 text-blue-600" />
@@ -79,7 +78,6 @@ function DashboardView() {
   const [showPrivacyBanner, setShowPrivacyBanner] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   
-  // --- New State: Controls "Report Mode" ---
   const [isExporting, setIsExporting] = useState(false); 
   
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -94,6 +92,17 @@ function DashboardView() {
 
   // --- Initial Data Fetch ---
   useEffect(() => {
+    // 1. Check Local Storage first
+    const cached = getAnalyticsData();
+    
+    if (cached.general_dashboard) {
+      setDashboardData(cached.general_dashboard);
+      setFilterOptions({ participants: cached.general_dashboard.participants });
+      setIsLoading(false);
+      return; // Skip the network request
+    }
+
+    // 2. Fallback to Network Request if no cache
     setIsLoading(true);
     fetchDashboardData(chatId)
       .then((data) => {
@@ -111,6 +120,11 @@ function DashboardView() {
 
   const handleApplyFilters = (filters: FilterState) => {
     setIsLoading(true);
+    // On mobile, close the drawer when applying
+    if (window.innerWidth < 768) {
+      setIsFiltersOpen(false);
+    }
+    
     fetchDashboardData(chatId, filters)
       .then((data) => {
         setDashboardData(data);
@@ -125,16 +139,12 @@ function DashboardView() {
       });
   };
 
-  // --- PDF Download Logic ---
   const handleDownloadPDF = async () => {
     if (isLoading || !dashboardData) return;
-
-    // 1. Enter "Export Mode"
     setIsExporting(true);
-    setIsFiltersOpen(false); // Close filters for clean shot
+    setIsFiltersOpen(false); 
     toast.info("Generating Report...", { description: "Applying document formatting..." });
 
-    // 2. Wait 1 second for the DOM to update styles (Dark -> Light)
     setTimeout(async () => {
       try {
         await downloadDashboardPDF(
@@ -145,7 +155,6 @@ function DashboardView() {
         console.error(e);
         toast.error("Export failed");
       } finally {
-        // 3. Exit "Export Mode" (Return to normal Dashboard)
         setIsExporting(false);
       }
     }, 1000); 
@@ -155,7 +164,7 @@ function DashboardView() {
     <main className="flex-1 bg-background text-foreground min-h-screen">
       <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] mx-auto space-y-6">
         
-        {/* Header Bar - Hidden during export to avoid duplication with ReportHeader */}
+        {/* Header Bar */}
         {!isExporting && (
           <HeaderBar 
             onToggleFilters={toggleFilters} 
@@ -165,7 +174,7 @@ function DashboardView() {
           />
         )}
 
-        {/* Privacy Banner - Hidden during export */}
+        {/* Privacy Banner */}
         <AnimatePresence>
           {showPrivacyBanner && !isExporting && (
             <motion.div
@@ -193,17 +202,70 @@ function DashboardView() {
           )}
         </AnimatePresence>
 
+        {/* --- DESKTOP FILTER VIEW (Inline) --- */}
+        <AnimatePresence>
+          {isFiltersOpen && !isExporting && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="hidden md:block overflow-hidden" 
+            >
+              <FiltersCard
+                isLoading={isLoading}
+                onApplyFilters={handleApplyFilters}
+                participants={filterOptions.participants}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* --- MOBILE FILTER DRAWER (Bottom Sheet) --- */}
+        <AnimatePresence>
+          {isFiltersOpen && !isExporting && (
+             <div className="md:hidden relative z-50">
+               {/* Backdrop */}
+               <motion.div 
+                 initial={{ opacity: 0 }}
+                 animate={{ opacity: 1 }}
+                 exit={{ opacity: 0 }}
+                 className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+                 onClick={() => setIsFiltersOpen(false)}
+               />
+               {/* Drawer Content */}
+               <motion.div
+                 initial={{ y: "100%" }}
+                 animate={{ y: 0 }}
+                 exit={{ y: "100%" }}
+                 transition={{ type: "spring", damping: 25, stiffness: 500 }}
+                 className="fixed inset-x-0 bottom-0 bg-card border-t rounded-t-[20px] shadow-2xl flex flex-col max-h-[85vh]"
+               >
+                 <div className="flex items-center justify-between p-4 border-b">
+                    <h3 className="font-semibold text-lg">Filters</h3>
+                    <Button variant="ghost" size="icon" onClick={() => setIsFiltersOpen(false)}>
+                      <ChevronDown className="h-5 w-5" />
+                    </Button>
+                 </div>
+                 <div className="overflow-y-auto p-4 pb-8">
+                    <FiltersCard
+                      isLoading={isLoading}
+                      onApplyFilters={handleApplyFilters}
+                      participants={filterOptions.participants}
+                    />
+                 </div>
+               </motion.div>
+             </div>
+          )}
+        </AnimatePresence>
+
         {/* --- REPORT WRAPPER --- */}
-        {/* We use a style block to force CSS variables to LIGHT mode values during export */}
         <div 
           id="dashboard-content" 
           className={cn(
             "space-y-6 transition-colors duration-300",
-            // If exporting: Force white bg, black text, and add paper-like padding
             isExporting ? "bg-white text-slate-900 p-12 theme-light" : ""
           )}
           style={isExporting ? {
-            // FORCE LIGHT THEME VARIABLES (Adjust these hex codes to match your tailwind light theme)
             "--background": "0 0% 100%", 
             "--foreground": "222.2 84% 4.9%",
             "--card": "0 0% 100%",
@@ -218,28 +280,9 @@ function DashboardView() {
           } as React.CSSProperties : {}}
         > 
           
-          {/* Inject Header only during Export */}
           {isExporting && <ReportHeader data={dashboardData} />}
 
-          {/* Filters - Hidden during export */}
-          <AnimatePresence>
-            {isFiltersOpen && !isExporting && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                className="overflow-hidden" 
-              >
-                <FiltersCard
-                  isLoading={isLoading}
-                  onApplyFilters={handleApplyFilters}
-                  participants={filterOptions.participants}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* --- MAIN CONTENT --- */}
-          {/* Note: We force specific grid/spacing for the printed report if needed */}
+          {/* Grid Layout: Stays grid-cols-12, but children span 12 on mobile */}
           <div className="grid grid-cols-12 gap-6">
             <div className="col-span-12">
               <KPICardsRow
@@ -271,7 +314,6 @@ function DashboardView() {
               />
             </div>
 
-            {/* Always expand Insights for the report */}
             <div className="col-span-12">
               {isExporting ? (
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 page-break-inside-avoid">
@@ -291,7 +333,6 @@ function DashboardView() {
             </div>
           </div>
           
-          {/* Report Footer */}
           {isExporting && (
              <div className="mt-12 pt-6 border-t border-slate-200 text-center text-slate-400 text-sm">
                 Generated by Chat Analyzer • Page 1 of 1
@@ -303,9 +344,7 @@ function DashboardView() {
   );
 }
 
-// ... (EmptyDashboardState and default export remain the same)
-// Just make sure to export DashboardPage as before
-
+// ... EmptyDashboardState and default export remain unchanged
 function EmptyDashboardState() {
   const navigate = useNavigate();
   return (

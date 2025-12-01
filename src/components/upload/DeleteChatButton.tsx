@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Drawer, DrawerContent } from "@/components/ui/drawer"; // Use Drawer for Mobile
 import { DeleteChatModal } from "./DeleteChatModal";
 import { Trash2 } from "lucide-react";
 import { useMediaQuery } from "@/lib/hooks/useMediaQuery";
@@ -11,28 +12,46 @@ interface DeleteChatButtonProps {
 }
 
 export function DeleteChatButton({ onDelete, onError }: DeleteChatButtonProps) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 640px)')
+  const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
-  const buttonClass = isMobile
-  ? "h-12 text-base font-semibold rounded-full w-120"
-  : "h-12 text-base font-semibold rounded-full w-70";
+  const buttonClass = "h-12 w-full md:w-auto px-6 text-base font-semibold rounded-2xl border-2 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive/50 transition-all";
 
-  return (
-    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className={buttonClass}>
+  // Desktop Component: Dialog
+  if (!isMobile) {
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Button variant="outline" className={buttonClass} onClick={() => setIsOpen(true)}>
           <Trash2 className="w-4 h-4 mr-2" />
           Delete Chat
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DeleteChatModal 
-          onDeleteConfirmed={onDelete} 
-          onClose={() => setIsModalOpen(false)} 
-          onError={onError}
-        />
-      </DialogContent>
-    </Dialog>
+        <DialogContent className="sm:max-w-md">
+          <DeleteChatModal 
+            onDeleteConfirmed={onDelete} 
+            onClose={() => setIsOpen(false)} 
+            onError={onError}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Mobile Component: Drawer
+  return (
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <Button variant="outline" className={buttonClass} onClick={() => setIsOpen(true)}>
+        <Trash2 className="w-4 h-4 mr-2" />
+        Delete Chat
+      </Button>
+      <DrawerContent>
+         <div className="p-4 pb-8">
+            <DeleteChatModal 
+                onDeleteConfirmed={onDelete} 
+                onClose={() => setIsOpen(false)} 
+                onError={onError}
+            />
+         </div>
+      </DrawerContent>
+    </Drawer>
   );
 }

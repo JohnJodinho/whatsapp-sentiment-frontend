@@ -2,9 +2,10 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8500/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://192.168.105.179:8000/api/v1";
 console.log(`The API BASE URL IS: ${API_BASE_URL}`)
 const CHAT_STORAGE_KEY = "current_chat";
+const ANALYTICS_STORAGE_KEY = "analytics_json";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -47,7 +48,9 @@ apiClient.interceptors.response.use(
       console.warn("Session expired. Resetting.");
       localStorage.removeItem('access_token');
       localStorage.removeItem(CHAT_STORAGE_KEY);
-      
+      if (localStorage.getItem(ANALYTICS_STORAGE_KEY)) {
+        localStorage.removeItem(ANALYTICS_STORAGE_KEY);
+      }
       
       window.location.href = '/'; 
       
@@ -66,6 +69,9 @@ apiClient.interceptors.response.use(
          });
 
          localStorage.removeItem('current_chat');
+         if (localStorage.getItem(ANALYTICS_STORAGE_KEY)) {
+           localStorage.removeItem(ANALYTICS_STORAGE_KEY);
+         }
          window.location.href = '/';
       }
     }

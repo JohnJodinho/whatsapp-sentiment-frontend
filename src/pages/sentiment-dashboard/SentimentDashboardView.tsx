@@ -22,7 +22,7 @@ import { SentimentHighlights } from "@/components/sentiment-dashboard/SentimentH
 
 // --- API & Utils ---
 import { fetchSentimentDashboardData } from "@/lib/api/sentimentDashboardService";
-import { saveSentimentDashboardData } from "@/utils/analyticsStore";
+import { saveSentimentDashboardData, getAnalyticsData } from "@/utils/analyticsStore";
 import { downloadDashboardPDF } from "@/utils/pdfGenerator";
 import type { SentimentDashboardData, SentimentFilterState } from "@/types/sentimentDashboardData";
 
@@ -109,20 +109,31 @@ export function SentimentDashboardView({ chatId }: SentimentDashboardViewProps) 
 
   // --- Initial Data Fetch ---
   useEffect(() => {
-    setIsLoading(true);
-    fetchSentimentDashboardData(Number(chatId))
-      .then((data) => {
-        setSentimentData(data);
-        setFilterOptions({ participants: data.participants });
-        saveSentimentDashboardData(data);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch initial sentiment data:", error);
-        toast.error("Could not load sentiment data.");
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    // 1. Check if we have cached data in localStorage
+    const cachedData = getAnalyticsData();
+
+    if (cachedData.sentiment_dashboard) {
+      // 2. If cached data exists, use it immediately
+      setSentimentData(cachedData.sentiment_dashboard);
+      setFilterOptions({ participants: cachedData.sentiment_dashboard.participants });
+      setIsLoading(false);
+    } else {
+      // 3. If no cache, fetch from API
+      setIsLoading(true);
+      fetchSentimentDashboardData(Number(chatId))
+        .then((data) => {
+          setSentimentData(data);
+          setFilterOptions({ participants: data.participants });
+          saveSentimentDashboardData(data);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch initial sentiment data:", error);
+          toast.error("Could not load sentiment data.");
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
   }, [chatId]);
 
   // --- Filter Handler ---

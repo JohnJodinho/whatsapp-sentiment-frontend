@@ -6,6 +6,7 @@ import UploadPage from "@/pages/upload/UploadPage";
 import DashboardPage from "./pages/dashboard/DashboardPage2";
 import SentimentDashboardPage from "./pages/sentiment-dashboard/SentimentDashboardPage";
 import ChatPage from "./pages/chat/ChatPage";
+import AboutPage from "./pages/about/AboutPage";
 
 import { apiClient } from "@/lib/api/apiClient";
 
@@ -34,6 +35,8 @@ function App() {
       <Route path="/dashboard" element={<MainLayout><DashboardPage /></MainLayout>} />
       <Route path="/sentiment-dashboard" element={<MainLayout><SentimentDashboardPage /></MainLayout>} />
       <Route path="/chat-to-chat" element={<MainLayout><ChatPage /></MainLayout>} />
+      <Route path="/about" element={<MainLayout><AboutPage /></MainLayout>} />
+      <Route path="/guide" element={<MainLayout><AboutPage /></MainLayout>} />
     </Routes>
   );
 }

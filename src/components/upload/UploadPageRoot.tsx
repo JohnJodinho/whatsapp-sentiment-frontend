@@ -4,9 +4,12 @@ export function UploadPageRoot({ children }: { children: React.ReactNode }) {
   return (
     <main
       role="main"
-      className="flex items-center justify-center min-h-[calc(100vh-8rem)] py-12 px-4 sm:px-6 lg:px-8"
+      // Changed min-h to 100dvh (dynamic viewport)
+      // Added pt-24 md:pt-0 to clear navbar on mobile but center on desktop
+      // Added overflow-x-hidden to prevent scrollbars from animations
+      className="flex flex-col md:flex-row items-center justify-center min-h-[100dvh] pt-24 md:pt-0 pb-10 px-4 sm:px-6 lg:px-8 overflow-x-hidden"
     >
-      <div className="scale-[0.9] sm:scale-[1] md:scale-[1] lg:scale-[1.05] xl:scale-[1.1] transition-transform duration-300 origin-top">
+      <div className="w-full max-w-4xl transition-transform duration-300 origin-center">
         {children}
       </div>
     </main>

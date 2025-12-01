@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -11,17 +11,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-// import { Separator } from "@/components/ui/separator";
 import {
   MessageSquareText,
   GaugeCircle,
-  ShieldAlert, // Changed icon to represent secure alerts/policy
-  Bot, // New icon for the RAG bot
+  ShieldAlert,
+  Bot,
   FileText,
   UploadCloud,
   ArrowRight,
-  BookOpen, // Icon for documentation
+  BookOpen,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function HomePage() {
   const { theme } = useTheme();
@@ -42,26 +42,36 @@ export default function HomePage() {
       : "/assets/light-mode-lapi-removebg-preview.png";
 
   return (
-    <div className="space-y-24 font-sans">
-      {/* 1️⃣ Hero Section */}
-      <section className="w-full pt-16 md:pt-24 bg-background">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 items-center gap-12 md:gap-16">
-          {/* Left Column: Text Content */}
-          <div>
-            <div className="inline-block px-3 py-1 mb-4 text-xs font-semibold tracking-wider text-[hsl(var(--mint))] uppercase bg-[hsl(var(--mint))]/10 rounded-full">
+    // 1. Changed space-y-24 to space-y-16 for tighter mobile flow
+    // 2. Added overflow-x-hidden to prevent horizontal scrolling bugs
+    <div className="space-y-16 md:space-y-24 font-sans overflow-x-hidden pb-10">
+      
+      {/* -------------------- */}
+      {/* 1️⃣ Hero Section      */}
+      {/* -------------------- */}
+      <section className="w-full pt-10 md:pt-24 bg-background px-4">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10 md:gap-16">
+          
+          {/* Text Content */}
+          <div className="text-center md:text-left">
+            <div className="inline-flex items-center px-3 py-1 mb-6 text-xs font-semibold tracking-wider text-[hsl(var(--mint))] uppercase bg-[hsl(var(--mint))]/10 rounded-full">
               Beta Release
             </div>
-            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-foreground tracking-tight">
+            
+            <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-foreground tracking-tight text-balance">
               Unlock the Emotional Intelligence of Your Chats
             </h1>
-            <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-md leading-relaxed">
+            
+            <p className="mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto md:mx-0">
               Transform raw WhatsApp history into actionable insights. 
               Upload your data for deep semantic analysis and chat directly with your history using our AI assistant.
             </p>
-            <div className="flex flex-wrap gap-4 mt-8">
+
+            {/* Mobile: Vertical Stack | Desktop: Horizontal Row */}
+            <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full sm:w-auto">
               <Button
                 size="lg"
-                className="px-8 py-6 text-sm md:text-base bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))] text-primary-foreground hover:opacity-90 font-semibold shadow-md transition-all"
+                className="w-full sm:w-auto px-8 py-6 text-base bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))] text-primary-foreground hover:opacity-90 font-semibold shadow-lg shadow-mint/20 transition-all active:scale-95"
                 onClick={() => navigate("/upload")}
               >
                 Analyze My Data
@@ -69,151 +79,138 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="px-8 py-6 text-sm md:text-base border-[hsl(var(--mint))] text-[hsl(var(--mint))] hover:bg-[hsl(var(--mint))]/10 font-semibold gap-2"
-                onClick={() => navigate("/guide")} // Pointing to documentation/how-to
+                className="w-full sm:w-auto px-8 py-6 text-base border-[hsl(var(--mint))] text-[hsl(var(--mint))] hover:bg-[hsl(var(--mint))]/10 font-semibold gap-2 active:scale-95"
+                onClick={() => navigate("/guide")}
               >
                 <BookOpen className="w-4 h-4" />
                 Read the Guide
               </Button>
             </div>
-            {/* Privacy Disclaimer Strategy: Emphasize the deletion policy */}
-            <p className="mt-5 text-xs text-muted-foreground flex items-center gap-2 max-w-sm leading-snug">
-              <ShieldAlert className="w-4 h-4 text-amber-500 flex-shrink-0" /> 
-              <span>
-                <strong>Ephemeral Storage Policy:</strong> For your privacy, all data is automatically purged from our servers 4 hours after upload.
-              </span>
-            </p>
+
+            <div className="mt-6 flex justify-center md:justify-start">
+              <p className="text-xs text-muted-foreground flex items-center gap-2 max-w-sm text-left bg-muted/30 p-2 rounded-lg border border-border/50">
+                <ShieldAlert className="w-4 h-4 text-amber-500 flex-shrink-0" /> 
+                <span>
+                  <strong>Privacy First:</strong> Data is purged 4 hours after upload.
+                </span>
+              </p>
+            </div>
           </div>
 
-          {/* Right Column: Hero Visual */}
-          <div className="flex justify-center relative">
+          {/* Hero Visual */}
+          <div className="flex justify-center relative mt-4 md:mt-0">
             <div className="absolute inset-0 bg-gradient-to-r from-[hsl(var(--mint))]/20 to-[hsl(var(--blue-accent))]/20 blur-3xl rounded-full opacity-50" />
             <img
               src={imageSrc}
               alt="SentimentScope Analytics Dashboard"
-              className="relative w-full h-auto max-w-md mx-auto md:max-w-lg object-contain drop-shadow-2xl"
+              className="relative w-[85%] md:w-full h-auto max-w-md object-contain drop-shadow-2xl animate-float-slow"
             />
           </div>
         </div>
       </section>
 
-      {/* 2️⃣ Feature Highlights Section */}
-      <section className="py-20 bg-muted/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+      {/* -------------------- */}
+      {/* 2️⃣ Features Section  */}
+      {/* -------------------- */}
+      <section className="py-12 md:py-20 bg-muted/30 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 text-balance">
             Deep Analysis, Strictly Private
           </h2>
-          <p className="text-muted-foreground mb-12 max-w-2xl mx-auto">
-            We combine advanced Multimodal RAG technology with a strict transient data policy to give you insights without compromising long-term privacy.
+          <p className="text-muted-foreground mb-10 max-w-2xl mx-auto">
+            We combine advanced Multimodal RAG technology with a strict transient data policy.
           </p>
           
-          {/* Switched to a 2x2 Grid to accommodate the new Feature (Chat to Chat) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-            
-            {/* Feature 1: Analysis */}
-            <Card className="p-8 bg-background border border-border/60 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
-              <div className="bg-[hsl(var(--mint))]/10 text-[hsl(var(--mint))] w-14 h-14 flex items-center justify-center rounded-2xl mb-6">
-                <MessageSquareText className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground">
-                Sentiment & Tone Trajectory
-              </h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                Our backend utilizes FastAPI and advanced NLP models to detect subtle emotional shifts, tracking how conversations evolve over time.
-              </p>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+            {/* Feature Cards: Reduced padding (p-5) for mobile breathing room */}
+            <FeatureCard 
+              icon={<MessageSquareText className="w-6 h-6" />}
+              title="Sentiment Trajectory"
+              desc="Detect subtle emotional shifts and track how conversations evolve over time using advanced NLP."
+              colorClass="text-[hsl(var(--mint))]"
+              bgClass="bg-[hsl(var(--mint))]/10"
+            />
 
-            {/* Feature 2: RAG / Chat-to-Chat (NEW) */}
-            <Card className="p-8 bg-background border border-border/60 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
-              <div className="bg-[hsl(var(--mint))]/10 text-[hsl(var(--mint))] w-14 h-14 flex items-center justify-center rounded-2xl mb-6">
-                <Bot className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground">
-                Interactive AI Assistant
-              </h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                Don't just view charts—talk to them. Use our Multimodal RAG interface to ask questions about specific messages or clarify dashboard visuals.
-              </p>
-            </Card>
+            <FeatureCard 
+              icon={<Bot className="w-6 h-6" />}
+              title="Interactive AI Assistant"
+              desc="Don't just view charts—talk to them. Ask questions about specific messages or visuals."
+              colorClass="text-[hsl(var(--mint))]"
+              bgClass="bg-[hsl(var(--mint))]/10"
+            />
 
-            {/* Feature 3: Speed */}
-            <Card className="p-8 bg-background border border-border/60 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
-              <div className="bg-[hsl(var(--mint))]/10 text-[hsl(var(--mint))] w-14 h-14 flex items-center justify-center rounded-2xl mb-6">
-                <GaugeCircle className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground">
-                High-Performance Parsing
-              </h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                Leveraging the speed of a robust backend architecture to process years of chat history and generate comprehensive visualizations in seconds.
-              </p>
-            </Card>
+            <FeatureCard 
+              icon={<GaugeCircle className="w-6 h-6" />}
+              title="High-Performance Parsing"
+              desc="Process years of chat history and generate comprehensive visualizations in seconds."
+              colorClass="text-[hsl(var(--mint))]"
+              bgClass="bg-[hsl(var(--mint))]/10"
+            />
 
-            {/* Feature 4: Privacy (Updated Strategy) */}
-            <Card className="p-8 bg-background border border-border/60 transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1">
-              <div className="bg-amber-500/10 text-amber-600 w-14 h-14 flex items-center justify-center rounded-2xl mb-6">
-                <ShieldAlert className="w-7 h-7" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground">
-                Transient Data Architecture
-              </h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                We employ a strict <strong>4-hour Time-To-Live (TTL)</strong> policy. Your chats are encrypted, processed, and then automatically and permanently deleted from our Postgres database.
-              </p>
-            </Card>
+            <FeatureCard 
+              icon={<ShieldAlert className="w-6 h-6" />}
+              title="Transient Data Architecture"
+              desc="Strict 4-hour TTL policy. Your chats are encrypted, processed, and permanently deleted."
+              colorClass="text-amber-600"
+              bgClass="bg-amber-500/10"
+            />
           </div>
         </div>
       </section>
 
-      {/* 3️⃣ Workflow Section */}
-      <section className="py-20 bg-background">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      {/* -------------------- */}
+      {/* 3️⃣ Workflow Section  */}
+      {/* -------------------- */}
+      <section className="py-12 md:py-20 bg-background px-4">
+        <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Seamless Integration</h2>
           <p className="text-muted-foreground mb-8">
-            No complex setup required. Go from export to insight in two simple steps.
+            Go from export to insight in two simple steps.
           </p>
           
-          <Accordion type="single" collapsible className="w-full border rounded-xl overflow-hidden shadow-sm">
+          <Accordion type="single" collapsible className="w-full border rounded-xl overflow-hidden shadow-sm bg-card">
             <AccordionItem value="steps" className="border-none">
-              <AccordionTrigger className="px-6 py-4 text-lg font-medium hover:no-underline hover:bg-muted/50 transition-colors">
+              <AccordionTrigger className="px-6 py-5 text-lg font-medium hover:no-underline hover:bg-muted/50 transition-colors">
                 View the Process
               </AccordionTrigger>
-              <AccordionContent className="px-6 pb-6 pt-2 bg-muted/20">
+              <AccordionContent className="px-5 pb-6 pt-2 bg-muted/10">
                 <div className="flex flex-col gap-6 mt-4">
                   
                   {/* Step 1 */}
-                  <div className="flex items-start text-left gap-4 bg-background p-4 rounded-lg border">
-                    <div className="bg-muted text-foreground font-bold w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 border">
+                  <div className="flex items-start text-left gap-4 bg-background p-4 rounded-lg border shadow-sm">
+                    <div className="bg-muted text-foreground font-bold w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 border text-sm">
                       1
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <FileText className="w-4 h-4 text-[hsl(var(--mint))]" />
-                        <h4 className="font-semibold text-foreground">Export Data Source</h4>
+                        <h4 className="font-semibold text-foreground text-sm md:text-base">Export Data Source</h4>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Export your chat history directly from WhatsApp as a standard <span className="font-mono text-xs bg-muted px-1 py-0.5 rounded">.txt</span> file (without media).
+                      <p className="text-xs md:text-sm text-muted-foreground">
+                        Export chat history from WhatsApp as a <span className="font-mono bg-muted px-1 rounded">.txt</span> file (no media).
                       </p>
                     </div>
                   </div>
 
                   {/* Connector */}
-                  <div className="flex justify-center -my-2">
-                    <ArrowRight className="w-5 h-5 text-muted-foreground rotate-90" />
+                  <div className="flex justify-center -my-3 z-10 relative">
+                    <div className="bg-background p-1 rounded-full border shadow-sm">
+                      <ArrowRight className="w-4 h-4 text-muted-foreground rotate-90" />
+                    </div>
                   </div>
 
                   {/* Step 2 */}
-                  <div className="flex items-start text-left gap-4 bg-background p-4 rounded-lg border">
-                    <div className="bg-muted text-foreground font-bold w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 border">
+                  <div className="flex items-start text-left gap-4 bg-background p-4 rounded-lg border shadow-sm">
+                    <div className="bg-muted text-foreground font-bold w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 border text-sm">
                       2
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <UploadCloud className="w-4 h-4 text-[hsl(var(--mint))]" />
-                        <h4 className="font-semibold text-foreground">Secure Upload & Auto-Purge</h4>
+                        <h4 className="font-semibold text-foreground text-sm md:text-base">Secure Upload</h4>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Upload to our secure analysis engine. A dashboard is generated instantly, and the deletion timer begins immediately.
+                      <p className="text-xs md:text-sm text-muted-foreground">
+                        Upload to the engine. Dashboard generates instantly, deletion timer starts.
                       </p>
                     </div>
                   </div>
@@ -225,30 +222,49 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4️⃣ CTA Section */}
-      <section className="w-full bg-gradient-to-br from-[hsl(var(--blue-accent))] to-indigo-700 dark:from-[var(--cta-gradient-start)] dark:to-[var(--cta-gradient-end)] py-24 text-center">
-        <div className="max-w-4xl mx-auto px-6">
+      {/* -------------------- */}
+      {/* 4️⃣ CTA Section       */}
+      {/* -------------------- */}
+      <section className="w-full bg-gradient-to-br from-[hsl(var(--blue-accent))] to-indigo-700 dark:from-[var(--cta-gradient-start)] dark:to-[var(--cta-gradient-end)] py-16 md:py-24 text-center px-4">
+        <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white tracking-tight">
-            Ready to decode your conversations?
+            Ready to decode?
           </h2>
-          <p className="text-white/80 text-lg mb-10 max-w-2xl mx-auto">
-            Experience the power of RAG-based analysis. Upload your chat, ask questions, and get clarity securely.
+          <p className="text-white/80 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
+            Upload your chat, ask questions, and get clarity securely.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
             <Button
               size="lg"
-              className="px-8 py-6 bg-white text-[hsl(var(--mint))] hover:bg-white/90 text-base font-bold shadow-xl transition-transform hover:scale-105"
+              className="w-full sm:w-auto px-8 py-6 bg-white text-[hsl(var(--mint))] hover:bg-white/90 text-base font-bold shadow-xl active:scale-95 transition-all"
               onClick={() => navigate("/upload")}
             >
               Start Analysis Now
             </Button>
-            <p className="text-white/60 text-sm mt-4 sm:mt-0 sm:ml-6 flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4" /> Data auto-expires in 4 hours
+            <p className="text-white/60 text-xs sm:text-sm mt-4 sm:mt-0 sm:ml-6 flex items-center gap-2">
+              <ShieldAlert className="w-3 h-3 sm:w-4 sm:h-4" /> Auto-expires in 4h
             </p>
           </div>
         </div>
       </section>
     </div>
   );
+}
+
+// Sub-component to clean up render loop and enforce consistent mobile padding
+function FeatureCard({ icon, title, desc, colorClass, bgClass }: { icon: ReactNode, title: string, desc: string, colorClass: string, bgClass: string }) {
+  return (
+    <Card className="p-5 md:p-8 bg-background border border-border/60 transition-all duration-300 ease-in-out hover:shadow-lg active:scale-[0.99]">
+      <div className={cn("w-12 h-12 flex items-center justify-center rounded-xl mb-4", bgClass, colorClass)}>
+        {icon}
+      </div>
+      <h3 className="text-lg md:text-xl font-bold text-foreground">
+        {title}
+      </h3>
+      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+        {desc}
+      </p>
+    </Card>
+  )
 }

@@ -23,15 +23,29 @@ export function PrimaryCTA({
   onCheckSentiments
 }: PrimaryCTAProps) {
 
+  // -------------------------
+  // STATE: UPLOADED (Result)
+  // -------------------------
   if (uploadState === 'uploaded') {
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <CheckSentimentsButton onClick={onCheckSentiments} />
-        <DeleteChatButton onDelete={onDelete} onError={onDeleteError}/>
+      <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto items-center justify-center animate-in fade-in slide-in-from-bottom-4">
         
+        {/* Desktop: Buttons side by side. Mobile: Stacked */}
+        <div className="w-full md:w-auto">
+             <CheckSentimentsButton onClick={onCheckSentiments} />
+        </div>
+
+        <div className="w-full md:w-auto">
+            {/* Restored the Dedicated Button Component to handle Modal Logic */}
+            <DeleteChatButton onDelete={onDelete} onError={onDeleteError} />
+        </div>
       </div>
     );
   }
+
+  // -------------------------
+  // STATE: READY TO UPLOAD
+  // -------------------------
   const isButtonDisabled = disabled || processing;
 
   return (
@@ -40,24 +54,23 @@ export function PrimaryCTA({
       aria-disabled={isButtonDisabled}
       onClick={onAnalyze}
       className="
-        w-[85vw] sm:w-[70vw] md:w-[50vw] lg:w-[40vw] xl:w-[30vw]
-        h-10 sm:h-12 md:h-14 lg:h-16
-        text-sm sm:text-base md:text-lg lg:text-xl
-        font-semibold rounded-[36px] text-primary-foreground
+        w-full sm:w-auto min-w-[280px] h-14
+        text-lg font-bold rounded-2xl
         bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))]
-        transition-all duration-300 hover:opacity-90 hover:scale-105
-        focus:ring-4 focus:ring-[hsl(var(--mint))]/30
-        disabled:opacity-50 shadow-[0_18px_36px_rgba(0,140,130,0.16)]
+        text-primary-foreground shadow-xl shadow-mint/25
+        hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]
+        disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed
+        transition-all duration-300
       "
     >
       {processing ? (
-        <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Processing...</span>
+        </div>
       ) : (
         "Analyze Chat"
       )}
     </Button>
-
-
-
   );
 }

@@ -10,23 +10,13 @@ import type {
   RawHistoryItem,
   ChatSource,
   QueryResponse
-  
 } from "@/types/chat";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessages } from "@/components/chat/ChatMessages";
-
 import type { ChatPanelHandle } from "@/components/chat/ChatUI"; 
-
 import { sendQueryStream, fetchHistory, resetMemory } from "@/lib/api/chatToChatService";
 import { getAnalyticsData } from "@/utils/analyticsStore";
-
-// const getAnalyticsJson = () => {
-//   return {
-//       general_dashboard: { total_messages: 1245, active_users: 5 },
-//       sentiment_dashboard: { overall_sentiment: "positive", top_phrases: ["feeling better"] }
-//   };
-// };
-
+import { generateUUID } from "@/utils/uuid"; // Import the fix
 
 const INITIAL_WELCOME_MESSAGE: ChatMessageType[] = [
   {
@@ -39,32 +29,29 @@ const INITIAL_WELCOME_MESSAGE: ChatMessageType[] = [
 
 const mapBackendHistory = (history: RawHistoryItem[]): ChatMessageType[] => {
     return history.map(item => ({
-        // Map common fields
         id: String(item.id),
         role: item.role,
         content: item.content,
-        // Ensure sources is undefined when backend returns null so it matches RagSource[] | undefined
         sources: item.sources ? item.sources.map(source => ({
             ...source, 
-            type: source.source_table, // Placeholder: Use source_table as the 'type' for the UI
-            content: `[${source.source_table}:${source.source_id}]`, // Placeholder: Recreate the citation key as 'content'
+            type: source.source_table,
+            content: `[${source.source_table}:${source.source_id}]`,
         } as ChatSource)) : undefined,
         createdAt: new Date(item.created_at), 
     }));
 };
 
-
-
 export const ChatPanel = forwardRef<ChatPanelHandle>(
   (_, ref) => {
-    const [messages, setMessages] =
-      useState<ChatMessageType[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [streamingMessage, setStreamingMessage] =
-      useState<ChatMessageType | null>(null);
-
-    // Ref to manage the interval
+    const [messages, setMessages] = useState<ChatMessageType[]>([]);
+    
+    // Logic Fix: Separate loading states
+    const [isGenerating, setIsGenerating] = useState(false); // LLM generation
+    const [isHistoryLoading, setIsHistoryLoading] = useState(true); // Initial load
+    
+    const [streamingMessage, setStreamingMessage] = useState<ChatMessageType | null>(null);
     const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
     const getChatId = (): string | null => {
         try {
             const chatInfo = JSON.parse(localStorage.getItem('current_chat') || '{}');
@@ -75,20 +62,21 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
         }
     };
 
-
-
     useEffect(() => {
         const chatId = getChatId();
-        if (!chatId) {
-            setMessages(INITIAL_WELCOME_MESSAGE);
-            return;
-        }
         
         const loadHistory = async () => {
+            if (!chatId) {
+                setMessages(INITIAL_WELCOME_MESSAGE);
+                setIsHistoryLoading(false);
+                return;
+            }
+
             try {
-                
+                // Ensure UI knows we are loading history
+                setIsHistoryLoading(true);
                 const rawHistory = await fetchHistory(chatId); 
-                const history = mapBackendHistory(rawHistory) 
+                const history = mapBackendHistory(rawHistory);
                 
                 if (history.length === 0) {
                     setMessages(INITIAL_WELCOME_MESSAGE);
@@ -98,6 +86,9 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
             } catch (error) {
                 console.error("Error restoring chat history:", error);
                 setMessages(INITIAL_WELCOME_MESSAGE);
+            } finally {
+                // Logic Fix: Unlock input
+                setIsHistoryLoading(false);
             }
         };
 
@@ -106,7 +97,6 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
 
     useImperativeHandle(ref, () => ({
       clearChat: async () => {
-
         if (streamIntervalRef.current) {
           clearInterval(streamIntervalRef.current);
         }
@@ -116,30 +106,27 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
           await resetMemory(chatId);
         }
         
-        // Reset frontend state
         setMessages(INITIAL_WELCOME_MESSAGE);
         setStreamingMessage(null);
-        setIsLoading(false);
+        setIsGenerating(false);
       },
     }));
 
-    // --- INTEGRATION POINT 1: SENDING LLM QUERY ---
     const handleSend = async (content: string) => {
       const chatId = getChatId();
-      if (!chatId) {
-          return; 
-      }
+      if (!chatId) return; 
 
-      // 1. Add user message & set loading state (UI remains the same)
+      // 1. Add user message
       const userMessage: ChatMessageType = {
-        id: crypto.randomUUID(),
+        id: generateUUID(), // Bug fix
         role: "user",
         content,
         createdAt: new Date(),
       };
       setMessages((prev) => [...prev, userMessage]);
-      setIsLoading(true);
-      const streamId = crypto.randomUUID();
+      setIsGenerating(true);
+      
+      const streamId = generateUUID(); // Bug fix
       setStreamingMessage({
         id: streamId,
         role: "assistant",
@@ -149,7 +136,6 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
 
       const callbacks = {
           onChunk: (chunk: string) => {
-              // Append new text chunk to the streaming message content
               setStreamingMessage((prev) => 
                   prev && prev.id === streamId 
                       ? { ...prev, content: prev.content + chunk } 
@@ -157,13 +143,11 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
               );
           },
           onEnd: (finalData: QueryResponse) => {
-              // 3. End of stream, clear skeleton and stop loading
-              setIsLoading(false);
+              setIsGenerating(false);
               setStreamingMessage(null);
 
-              // 4. Add final message
               const assistantMessage: ChatMessageType = {
-                  id: streamId, // Use the same ID as the shell
+                  id: streamId,
                   role: "assistant",
                   content: finalData.answer,
                   createdAt: new Date(),
@@ -173,13 +157,12 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
           },
           onError: (error: Error) => {
               console.error("LLM Query failed:", error);
-              // Fallback for error handling
-              setIsLoading(false);
+              setIsGenerating(false);
               setStreamingMessage(null); 
               setMessages((prev) => [
                   ...prev,
                   {
-                      id: crypto.randomUUID(),
+                      id: generateUUID(), // Bug fix
                       role: "assistant",
                       content: `Sorry, the streaming connection failed. Error: ${error.message}`,
                       createdAt: new Date(),
@@ -189,36 +172,41 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
       };
 
       try {
-        const payload = {
-            question: content, 
-            analytics_json: getAnalyticsData(), 
-        }
+          const payload = {
+              question: content, 
+              analytics_json: getAnalyticsData(), 
+          }
 
-      // --- SERVICE CALL ---
-              // Ensure analytics_json matches the expected Record<string, unknown> shape
-              // by casting the result of getAnalyticsData() to an indexable record.
-              await sendQueryStream(chatId, {
-                  ...payload,
-                  analytics_json: getAnalyticsData() as unknown as Record<string, unknown>,
-              }, callbacks); 
-              // ------------------
+          await sendQueryStream(chatId, {
+              ...payload,
+              analytics_json: getAnalyticsData() as unknown as Record<string, unknown>,
+          }, callbacks); 
       
-            } catch (error) {
-                // This catch block will usually only handle synchronous errors before the fetch starts
-                callbacks.onError(error as Error);
-            }
+      } catch (error) {
+          callbacks.onError(error as Error);
+      }
     };
 
     return (
-      <div className="relative flex flex-col bg-card border border-border/60 rounded-2xl shadow-sm mt-6 h-[75vh] overflow-hidden">
+      <div className="relative flex flex-col flex-1 overflow-hidden bg-card 
+        /* Mobile: Full width/height, no borders/radius */
+        w-full h-full
+        border-0 rounded-none shadow-none
+
+        /* Desktop: Card style, fixed height, specific width */
+        md:border md:border-border/60 md:rounded-2xl md:shadow-sm md:h-[75vh] md:mt-6
+      ">
         <ChatMessages
           messages={messages}
           streamingMessage={streamingMessage}
-          isLoading={isLoading}
+          isLoading={isGenerating || isHistoryLoading} // Pass combined loading state
         />
-        <div className="border-t border-border/60 bg-card/80 backdrop-blur-sm shadow-[0_-2px_8px_rgba(0,0,0,0.05)]">
+        
+        {/* Input Area Container */}
+        <div className="border-t border-border/60 bg-card/80 backdrop-blur-sm shadow-[0_-2px_8px_rgba(0,0,0,0.05)] z-10">
           <ChatInput
-            isLoading={isLoading}
+            isLoading={isGenerating}
+            isHistoryLoading={isHistoryLoading} // Pass specific history state
             onSend={handleSend}
           />
         </div>
