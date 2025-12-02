@@ -59,29 +59,21 @@ export function SentimentHourChart({ isLoading, data }: SentimentHourChartProps)
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 pl-2 pr-4 h-[calc(100%-60px)]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-               data={data}
-              //  stackOffset="expand" // Stacks to 100%
-              //  margin={{ top: 5, right: 0, left: -20, bottom: 0 }} // Adjust margins
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-              <XAxis
-                dataKey="hour"
-                tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 10 }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `${value}h`}
-                interval={1} // Show every 3rd hour label
-              />
-              <YAxis
-                type="number"
-                tick={false}
-                tickLine={false}
-                axisLine={false}
-                
-                domain={[0, 1]}
-              />
+           {/* --- MOBILE FIX START --- */}
+           <div className="w-full h-full overflow-x-auto pb-2">
+             <div className="h-full min-w-[600px] md:min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data || []}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                    <XAxis
+                      dataKey="hour"
+                      tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 10 }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `${value}h`}
+                      interval={0} // Force show all ticks when scrolling
+                    />
+                    <YAxis type="number" tick={false} tickLine={false} axisLine={false} domain={[0, 1]} />
               <Tooltip
                   cursor={{ fill: 'hsl(var(--muted))', opacity: 0.05 }}
                    content={({ active, payload, label }) => {
@@ -120,13 +112,14 @@ export function SentimentHourChart({ isLoading, data }: SentimentHourChartProps)
                      return null;
                    }}
               />
-              {/* Optional Legend */}
-              {/* <Legend iconSize={10} wrapperStyle={{ fontSize: '11px', paddingTop: '10px'}}/> */}
-              <Bar dataKey="Positive" stackId="a" fill="hsl(var(--sentiment-positive))" barSize={15} radius={[0, 0, 1, 1]} />
-              <Bar dataKey="Negative" stackId="a" fill="hsl(var(--sentiment-negative))" barSize={15} radius={[0, 0, 1, 1]} />
-              <Bar dataKey="Neutral" stackId="a" fill="hsl(var(--sentiment-neutral))" barSize={15} radius={[4, 4, 0, 0]}/> {/* Rounded top */}
-            </BarChart>
-          </ResponsiveContainer>
+              <Bar dataKey="Positive" stackId="a" fill="hsl(var(--sentiment-positive))" barSize={20} radius={[0, 0, 1, 1]} />
+                    <Bar dataKey="Negative" stackId="a" fill="hsl(var(--sentiment-negative))" barSize={20} radius={[0, 0, 1, 1]} />
+                    <Bar dataKey="Neutral" stackId="a" fill="hsl(var(--sentiment-neutral))" barSize={20} radius={[4, 4, 0, 0]}/>
+                  </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+          {/* --- MOBILE FIX END --- */}
         </CardContent>
       </Card>
     </motion.div>

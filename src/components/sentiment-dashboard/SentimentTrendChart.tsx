@@ -78,10 +78,8 @@ export function SentimentTrendChart({
   }
 
   // Determine date format
-  const dateFormat =
-    data.length > 90 ? "MMM yyyy" : data.length > 7 ? "MMM d" : "M/d";
-  const tickFormatter = (dateStr: string) =>
-    format(parseISO(dateStr), dateFormat);
+  const dateFormat = data && data.length > 90 ? "MMM yyyy" : data && data.length > 7 ? "MMM d" : "M/d";
+  const tickFormatter = (dateStr: string) => format(parseISO(dateStr), dateFormat);
 
   return (
     <motion.div
@@ -100,32 +98,29 @@ export function SentimentTrendChart({
         </CardHeader>
 
         <CardContent className="p-0 pl-2 pr-4 h-[calc(100%-60px)]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={data}
-              margin={{
-                top: 10,
-                right: 12,
-                left: 12,
-                bottom: 0,
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-              <XAxis
-                dataKey="date"
-                tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={tickFormatter}
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-                domain={[0, 1]}
-              />
+          <div className="w-full h-full overflow-x-auto pb-2">
+            <div className="h-full min-w-[600px] md:min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={data || []}
+                  margin={{ top: 10, right: 12, left: 12, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={tickFormatter}
+                    interval="preserveStartEnd"
+                  />
+                  <YAxis
+                    tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `${(value /10).toFixed(0)}%`}
+                    domain={[0, 1]}
+                  />
               <Tooltip
                 cursor={{ stroke: "hsl(var(--muted))", strokeWidth: 2 }}
                 content={({ active, payload, label }) => {
@@ -151,32 +146,14 @@ export function SentimentTrendChart({
               />
 
               {/* Sentiment Lines */}
-              <Line
-                type="monotone"
-                dataKey="Positive"
-                stroke="hsl(var(--sentiment-positive))"
-                strokeWidth={2}
-                dot={false}
-                name="Positive"
-              />
-              <Line
-                type="monotone"
-                dataKey="Negative"
-                stroke="hsl(var(--sentiment-negative))"
-                strokeWidth={2}
-                dot={false}
-                name="Negative"
-              />
-              <Line
-                type="monotone"
-                dataKey="Neutral"
-                stroke="hsl(var(--sentiment-neutral))"
-                strokeWidth={2}
-                dot={false}
-                name="Neutral"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+              <Line type="monotone" dataKey="Positive" stroke="hsl(var(--sentiment-positive))" strokeWidth={2} dot={false} name="Positive" />
+                  <Line type="monotone" dataKey="Negative" stroke="hsl(var(--sentiment-negative))" strokeWidth={2} dot={false} name="Negative" />
+                  <Line type="monotone" dataKey="Neutral" stroke="hsl(var(--sentiment-neutral))" strokeWidth={2} dot={false} name="Neutral" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          {/* --- MOBILE FIX END --- */}
         </CardContent>
       </Card>
     </motion.div>

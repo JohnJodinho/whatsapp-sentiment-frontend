@@ -26,7 +26,7 @@ const formatTimestamp = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
   
-  const GROUPED_CITATION_REGEX = /\[((?:(?:messages|segments_sender):\d+(?:,\s*)?)+)\]/g;
+  const GROUPED_CITATION_REGEX = /\[((?:(?:source_table:)?(?:messages|segments_sender):\d+(?:,\s*)?)+)\]/g;
   
   interface ParsedContent {
     content: string;
@@ -51,15 +51,17 @@ const formatTimestamp = (date: Date) => {
     const newContent = content.replace(GROUPED_CITATION_REGEX, (fullTag, groupContent) => {
       const keys = groupContent.split(",").map((k: string) => k.trim());
       const replacements: string[] = [];
-  
+
       keys.forEach((key: string) => {
-        const sourceObject = sourceLookup.get(key);
+        // FIX: Normalize the key by removing the prefix if it exists
+        const cleanKey = key.replace("source_table:", "");
+        const sourceObject = sourceLookup.get(cleanKey);
   
         if (sourceObject) {
-          let index = citationMap.get(key);
+          let index = citationMap.get(cleanKey);
           if (index === undefined) {
             index = citationCounter++;
-            citationMap.set(key, index);
+            citationMap.set(cleanKey, index);
             uniqueSources.set(String(index), sourceObject);
           }
           replacements.push(`<sup data-citation-id="${index}">[${index}]</sup>`);

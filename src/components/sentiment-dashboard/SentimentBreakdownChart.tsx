@@ -86,14 +86,15 @@ export function SentimentBreakdownChart({ isLoading, data }: SentimentBreakdownC
           </Select>
         </CardHeader>
         <CardContent className="h-[300px] w-full overflow-y-auto pr-4">
-          <ChartContainer config={{}} style={{ height: `${chartHeight}px`}} className="w-full">
-   
-             <ResponsiveContainer width="100%" height={chartHeight}>
-               <BarChart
-                 data={sortedData}
-                 layout="vertical"
-                 margin={{ right: 10, left: 10}}
-               >
+          <div className="overflow-x-auto w-full">
+             <div className="min-w-[500px] md:min-w-0"> 
+               <ChartContainer config={{}} style={{ height: `${chartHeight}px`}} className="w-full">
+                  <ResponsiveContainer width="100%" height={chartHeight}>
+                    <BarChart
+                      data={sortedData}
+                      layout="vertical"
+                      margin={{ right: 10, left: 10}}
+                    >
                  <CartesianGrid stroke={gridColor} strokeOpacity={0.6} horizontal={false} />
                  <XAxis
                    type="number"
@@ -102,14 +103,14 @@ export function SentimentBreakdownChart({ isLoading, data }: SentimentBreakdownC
                    axisLine={false}
                  />
                  <YAxis
-                   dataKey="name"
-                   type="category"
-                   tick={{ fill: tickColor, fontSize: 12 }}
-                   tickLine={false}
-                   axisLine={false}
-                   width={130}
-                   tickFormatter={(value) => value.length > 13 ? `${value.substring(0, 10)}...` : value}
-                 />
+                    dataKey="name"
+                    type="category"
+                    tick={{ fill: tickColor, fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={130} // Fixed width for names
+                    tickFormatter={(value) => value.length > 15 ? `${value.substring(0, 15)}...` : value} 
+                  />
                  <Tooltip
                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
                    content={({ active, payload, label }) => {
@@ -139,8 +140,11 @@ export function SentimentBreakdownChart({ isLoading, data }: SentimentBreakdownC
                  <Bar dataKey="Negative" stackId="a" fill="hsl(var(--sentiment-negative))" />
                  <Bar dataKey="Neutral" stackId="a" fill="hsl(var(--sentiment-neutral))" radius={[0, 8, 8, 0]}/>
                </BarChart>
-             </ResponsiveContainer>
-           </ChartContainer>
+                  </ResponsiveContainer>
+               </ChartContainer>
+             </div>
+           </div>
+           {/* --- MOBILE FIX END --- */}
         </CardContent>
       </Card>
     </motion.div>

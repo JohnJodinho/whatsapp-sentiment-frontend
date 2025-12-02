@@ -35,18 +35,20 @@ function HighlightCard({
       <Card
           className="h-[160px] flex flex-col justify-between p-5 bg-muted/30 rounded-3xl shadow-md 
           hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300
-
           border-0 !border-transparent ring-0 outline-none"
       >
-        <div className="flex items-start gap-3 mb-2">
+        <div className="flex items-start gap-3 mb-2 flex-1 min-h-0"> {/* flex-1 allows child to scroll */}
           <Icon className={`h-5 w-5 mt-0.5 shrink-0 ${iconColor}`} />
-          <p className="text-sm text-foreground/90 leading-relaxed italic">
-            "{message.text}"
-          </p>
+          {/* --- MOBILE FIX: Scrollable Text Area --- */}
+          <div className="overflow-y-auto h-full pr-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+            <p className="text-sm text-foreground/90 leading-relaxed italic">
+              "{message.text}"
+            </p>
+          </div>
         </div>
-        <div className="flex justify-between items-end text-xs text-muted-foreground">
-          <span>{message.sender}</span>
-          <span>{format(parseISO(message.timestamp), "MMM d, HH:mm")}</span>
+        <div className="flex justify-between items-end text-xs text-muted-foreground pt-2">
+          <span className="truncate max-w-[50%] font-medium">{message.sender}</span>
+          <span className="shrink-0">{format(parseISO(message.timestamp), "MMM d, HH:mm")}</span>
         </div>
       </Card>
     </div>
