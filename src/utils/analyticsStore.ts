@@ -22,10 +22,12 @@ export const getAnalyticsData = (): AnalyticsJson => {
   }
 };
 
-/**
- * Updates the General Dashboard section of the analytics JSON.
- * Merges with existing Sentiment data if present.
- */
+export const hasAnalyticsData = (): boolean => {
+  const data = getAnalyticsData();
+  // Check if either dashboard has non-null data
+  return !!(data.general_dashboard || data.sentiment_dashboard);
+};
+
 export const saveGeneralDashboardData = (data: DashboardData) => {
   try {
     const current = getAnalyticsData();
@@ -41,10 +43,7 @@ export const saveGeneralDashboardData = (data: DashboardData) => {
   }
 };
 
-/**
- * Updates the Sentiment Dashboard section of the analytics JSON.
- * Merges with existing General Dashboard data if present.
- */
+
 export const saveSentimentDashboardData = (data: SentimentDashboardData) => {
   try {
     const current = getAnalyticsData();

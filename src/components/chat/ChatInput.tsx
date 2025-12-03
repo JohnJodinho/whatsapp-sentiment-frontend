@@ -30,7 +30,7 @@ export function ChatInput({ isLoading, isHistoryLoading = false, onSend }: ChatI
   // Determine placeholder and disabled state
   const isInputDisabled = isLoading || isHistoryLoading;
   const placeholderText = isHistoryLoading 
-    ? "Initializing chat history..." 
+    ? "Preparing your chat environment..." 
     : "Ask about your chat or dashboard insights...";
 
   return (

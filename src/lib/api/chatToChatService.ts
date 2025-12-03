@@ -4,8 +4,18 @@ import type {  QueryPayload, QueryResponse, RawHistoryItem } from "@/types/chat"
 import { apiClient } from "@/lib/api/apiClient";
 import { toast } from "sonner";
 
+
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://192.168.105.179:8000/api/v1";
-console.log(`The API BASE URL IS: ${API_BASE_URL}`);  
+
+export interface ChatStatusResponse{
+  status: "pending" | "processing" | "completed" | "failed";
+}
+
+export async function getChatStatus(chatId: string): Promise<ChatStatusResponse> {
+  const response = await apiClient.get<ChatStatusResponse>(`/rag/chat/${chatId}/status`);
+  return response.data;
+}
 
 export async function sendQuery(
   chatId: string,
@@ -25,10 +35,6 @@ interface StreamingCallbacks {
     onError: (error: Error) => void;
 }
 
-/**
- * Sends a new user query and processes the streaming response via callbacks.
- * The backend must support Server-Sent Events (SSE).
- */
 export async function sendQueryStream(
   chatId: string,
   payload: QueryPayload,

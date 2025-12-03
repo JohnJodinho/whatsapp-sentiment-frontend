@@ -14,9 +14,11 @@ import type {
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import type { ChatPanelHandle } from "@/components/chat/ChatUI"; 
-import { sendQueryStream, fetchHistory, resetMemory } from "@/lib/api/chatToChatService";
-import { getAnalyticsData } from "@/utils/analyticsStore";
-import { generateUUID } from "@/utils/uuid"; // Import the fix
+import { sendQueryStream, fetchHistory, resetMemory, getChatStatus } from "@/lib/api/chatToChatService";
+import { getAnalyticsData, hasAnalyticsData } from "@/utils/analyticsStore";
+import { generateUUID } from "@/utils/uuid"; 
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const INITIAL_WELCOME_MESSAGE: ChatMessageType[] = [
   {
@@ -41,6 +43,8 @@ const mapBackendHistory = (history: RawHistoryItem[]): ChatMessageType[] => {
     }));
 };
 
+type EmbeddingStatus = "pending" | "processing" | "completed" | "failed";
+
 export const ChatPanel = forwardRef<ChatPanelHandle>(
   (_, ref) => {
     const [messages, setMessages] = useState<ChatMessageType[]>([]);
@@ -48,9 +52,10 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
     // Logic Fix: Separate loading states
     const [isGenerating, setIsGenerating] = useState(false); // LLM generation
     const [isHistoryLoading, setIsHistoryLoading] = useState(true); // Initial load
-    
+    const [embeddingStatus, setEmbeddingStatus] = useState<EmbeddingStatus | null>("pending");
     const [streamingMessage, setStreamingMessage] = useState<ChatMessageType | null>(null);
     const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const getChatId = (): string | null => {
         try {
@@ -64,35 +69,50 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
 
     useEffect(() => {
         const chatId = getChatId();
-        
-        const loadHistory = async () => {
-            if (!chatId) {
-                setMessages(INITIAL_WELCOME_MESSAGE);
-                setIsHistoryLoading(false);
-                return;
-            }
+        if (!chatId) {
+          setMessages(INITIAL_WELCOME_MESSAGE);
+          setIsHistoryLoading(false);
+          return;
+        }
 
-            try {
-                // Ensure UI knows we are loading history
-                setIsHistoryLoading(true);
-                const rawHistory = await fetchHistory(chatId); 
-                const history = mapBackendHistory(rawHistory);
-                
-                if (history.length === 0) {
-                    setMessages(INITIAL_WELCOME_MESSAGE);
-                } else {
-                    setMessages(history);
+        const checkStatusAndLoad = async () => {
+          try {
+                const { status } = await getChatStatus(chatId);
+                setEmbeddingStatus(status);
+
+                if (status === "completed") {
+                    // Stop polling, load history
+                    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+                    
+                    const rawHistory = await fetchHistory(chatId);
+                    const history = mapBackendHistory(rawHistory);
+                    setMessages(history.length > 0 ? history : INITIAL_WELCOME_MESSAGE);
+                    setIsHistoryLoading(false);
+                } 
+                else if (status === "failed") {
+                    // Stop polling, show error
+                    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+                    setIsHistoryLoading(false);
+                    toast.error("Analysis Failed", {
+                        description: "We couldn't process this chat file. Please try uploading it again."
+                    });
                 }
+                // If pending/processing, do nothing (keep polling, keep history loading)
             } catch (error) {
-                console.error("Error restoring chat history:", error);
-                setMessages(INITIAL_WELCOME_MESSAGE);
-            } finally {
-                // Logic Fix: Unlock input
-                setIsHistoryLoading(false);
+                console.error("Error checking chat status:", error);
+                // Keep trying or fail gracefully?
             }
         };
 
-        loadHistory();
+
+        checkStatusAndLoad();
+
+        // Start polling
+        pollingIntervalRef.current = setInterval(checkStatusAndLoad, 3000);
+
+        return () => {
+            if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        };
     }, []);
 
     useImperativeHandle(ref, () => ({
@@ -116,7 +136,13 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
       const chatId = getChatId();
       if (!chatId) return; 
 
-      // 1. Add user message
+      if (!hasAnalyticsData()) {
+          toast.info("Dashboard Data Missing", {
+              description: "Please visit the Dashboard page to load your analytics first. Without it, I can only answer general questions.",
+              duration: 5000,
+          });
+          
+      }
       const userMessage: ChatMessageType = {
         id: generateUUID(), // Bug fix
         role: "user",
@@ -164,7 +190,7 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
                   {
                       id: generateUUID(), // Bug fix
                       role: "assistant",
-                      content: `Sorry, the streaming connection failed. Error: ${error.message}`,
+                      content: `Sorry, the streaming messages failed. Error: ${error.message}`,
                       createdAt: new Date(),
                   } as ChatMessageType,
               ]);
@@ -187,6 +213,15 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
       }
     };
 
+    // const getLoadingText = () => {
+    //     if (embeddingStatus === 'processing' || embeddingStatus === 'pending') return "Processing your chat data...";
+    //     if (isHistoryLoading) return "Loading history...";
+    //     return undefined; 
+    // };
+
+    //Lock if Generating response OR History loading OR Processing embeddings 
+    const shouldDisableInput = isGenerating || isHistoryLoading || embeddingStatus === 'processing' || embeddingStatus === 'pending';
+
     return (
       <div className="relative flex flex-col flex-1 overflow-hidden bg-card 
         /* Mobile: Full width/height, no borders/radius */
@@ -200,13 +235,21 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
           messages={messages}
           streamingMessage={streamingMessage}
           isLoading={isGenerating || isHistoryLoading} // Pass combined loading state
+          processingState = {embeddingStatus === 'processing' || embeddingStatus === 'pending'}
         />
         
-        {/* Input Area Container */}
         <div className="border-t border-border/60 bg-card/80 backdrop-blur-sm shadow-[0_-2px_8px_rgba(0,0,0,0.05)] z-10">
+            {/* Show a banner if processing */}
+            {(embeddingStatus === 'processing' || embeddingStatus === 'pending') && (
+                 <div className="bg-blue-50/50 dark:bg-blue-900/10 px-4 py-2 text-xs text-center text-blue-600 dark:text-blue-400 flex items-center justify-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Processing your chat data. This may take a moment.</span>
+                 </div>
+            )}
+          
           <ChatInput
             isLoading={isGenerating}
-            isHistoryLoading={isHistoryLoading} // Pass specific history state
+            isHistoryLoading={shouldDisableInput} // Reusing this prop to lock the input
             onSend={handleSend}
           />
         </div>
