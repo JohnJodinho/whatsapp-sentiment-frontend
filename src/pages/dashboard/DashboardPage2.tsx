@@ -94,7 +94,11 @@ function DashboardView() {
   useEffect(() => {
     // 1. Check Local Storage first
     const cached = getAnalyticsData();
-    
+    const chat_id_in_store = cached?.chat_id || null;
+    if (chat_id_in_store && Number(chat_id_in_store) !== Number(chatId)) {
+      cached.general_dashboard = null;
+    }
+
     if (cached.general_dashboard) {
       setDashboardData(cached.general_dashboard);
       setFilterOptions({ participants: cached.general_dashboard.participants });

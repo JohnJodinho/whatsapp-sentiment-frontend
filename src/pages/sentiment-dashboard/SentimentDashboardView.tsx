@@ -107,18 +107,23 @@ export function SentimentDashboardView({ chatId }: SentimentDashboardViewProps) 
 
   const toggleFilters = () => setIsFiltersOpen((prev) => !prev);
 
-  // --- Initial Data Fetch ---
+
   useEffect(() => {
-    // 1. Check if we have cached data in localStorage
+    
     const cachedData = getAnalyticsData();
 
+    const chat_id_in_store = cachedData?.chat_id || null;
+    if (chat_id_in_store && Number(chat_id_in_store) !== Number(chatId)) {
+      cachedData.sentiment_dashboard = null;
+    }
+
     if (cachedData.sentiment_dashboard) {
-      // 2. If cached data exists, use it immediately
+      
       setSentimentData(cachedData.sentiment_dashboard);
       setFilterOptions({ participants: cachedData.sentiment_dashboard.participants });
       setIsLoading(false);
     } else {
-      // 3. If no cache, fetch from API
+      
       setIsLoading(true);
       fetchSentimentDashboardData(Number(chatId))
         .then((data) => {
