@@ -34,46 +34,48 @@ const formatTimestamp = (date: Date) => {
   }
   
   function parseAndReplaceCitations(content: string, sources: ChatSource[]): ParsedContent {
-    if (!sources || sources.length === 0) {
-      return { content, sourceMap: new Map() };
-    }
-  
-    const uniqueSources = new Map<string, ChatSource>();
-    const citationMap = new Map<string, number>();
-    let citationCounter = 1;
-  
-    const sourceLookup = new Map<string, ChatSource>();
-    sources.forEach((s) => {
-      sourceLookup.set(`${s.type}:${s.source_id}`, s);
-      sourceLookup.set(`${s.source_table}:${s.source_id}`, s);
-    });
-  
-    const newContent = content.replace(GROUPED_CITATION_REGEX, (fullTag, groupContent) => {
-      const keys = groupContent.split(",").map((k: string) => k.trim());
-      const replacements: string[] = [];
-
-      keys.forEach((key: string) => {
-        // FIX: Normalize the key by removing the prefix if it exists
-        const cleanKey = key.replace("source_table:", "");
-        const sourceObject = sourceLookup.get(cleanKey);
-  
-        if (sourceObject) {
-          let index = citationMap.get(cleanKey);
-          if (index === undefined) {
-            index = citationCounter++;
-            citationMap.set(cleanKey, index);
-            uniqueSources.set(String(index), sourceObject);
-          }
-          replacements.push(`<sup data-citation-id="${index}">[${index}]</sup>`);
-        }
-      });
-  
-      if (replacements.length === 0) return fullTag;
-      return replacements.join("");
-    });
-  
-    return { content: newContent, sourceMap: uniqueSources };
+  if (!sources || sources.length === 0) {
+    return { content, sourceMap: new Map() };
   }
+
+  const uniqueSources = new Map<string, ChatSource>();
+  const citationMap = new Map<string, number>();
+  let citationCounter = 1;
+
+  const sourceLookup = new Map<string, ChatSource>();
+  sources.forEach((s) => {
+    sourceLookup.set(`${s.type}:${s.source_id}`, s);
+    sourceLookup.set(`${s.source_table}:${s.source_id}`, s);
+  });
+
+  const newContent = content.replace(GROUPED_CITATION_REGEX, (fullTag, groupContent) => {
+    const keys = groupContent.split(",").map((k: string) => k.trim());
+    const replacements: string[] = [];
+
+    keys.forEach((key: string) => {
+      const cleanKey = key.replace("source_table:", "");
+      const sourceObject = sourceLookup.get(cleanKey);
+
+      if (sourceObject) {
+        let index = citationMap.get(cleanKey);
+        if (index === undefined) {
+          index = citationCounter++;
+          citationMap.set(cleanKey, index);
+          uniqueSources.set(String(index), sourceObject);
+        }
+        // CHANGED: Output a Markdown link instead of HTML
+        // Format: [Label](citation:ID)
+        replacements.push(`[${index}](citation:${index})`);
+      }
+    });
+
+    if (replacements.length === 0) return fullTag;
+    // Join with spaces or commas if you prefer, but spaces usually look cleaner
+    return replacements.join(" "); 
+  });
+
+  return { content: newContent, sourceMap: uniqueSources };
+}
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -146,48 +148,56 @@ export function ChatMessage({ message, onSourceClick }: ChatMessageProps) {
               {parsedContent.content ? (
                 <TooltipProvider>
                   <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    rehypePlugins={[rehypeRaw]} 
-                    components={{
-                          sup: (props: ComponentPropsWithoutRef<"sup"> & { "data-citation-id"?: string }) => {
-                              const citationId = props["data-citation-id"];
-                              const source = citationId
-                                ? parsedContent.sourceMap.get(citationId)
-                                : undefined;
-  
-                              if (!source) {
-                                return <sup {...props} />;
-                              }
-  
-                          return (
-                            <Tooltip delayDuration={0}>
-                              <TooltipTrigger asChild>
-                                <sup
-                                  className="cursor-pointer text-[hsl(var(--cyan-accent))] font-bold hover:underline ml-0.5 select-none"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault(); 
-                                    onSourceClick(source);
-                                  }}
-                                >
-                                  {props.children}
-                                </sup>
-                              </TooltipTrigger>
-                              <TooltipContent 
-                                side="top" 
-                                className="max-w-xs bg-popover text-popover-foreground border border-border shadow-lg p-3 rounded-lg"
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]} // You can actually remove this now if you want!
+                  components={{
+                    // CHANGED: We now intercept 'a' tags (links) instead of 'sup'
+                    a: ({ href, children, ...props }: ComponentPropsWithoutRef<'a'>) => {
+                      // Check if this link is one of our custom citations
+                      if (href?.startsWith("citation:")) {
+                        const citationId = href.split(":")[1];
+                        const source = citationId
+                          ? parsedContent.sourceMap.get(citationId)
+                          : undefined;
+
+                        if (!source) return <>{children}</>;
+
+                        return (
+                          <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <sup
+                                // We render the <sup> here manually
+                                className="cursor-pointer text-[hsl(var(--cyan-accent))] font-bold hover:underline ml-0.5 select-none"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  onSourceClick(source);
+                                }}
                               >
-                                <p className="text-xs line-clamp-6">
-                                  {source.text}
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        },
-                      }}
-                  >
-                    {parsedContent.content}
-                  </ReactMarkdown>
+                                [{children}]
+                              </sup>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="top"
+                              className="max-w-xs bg-popover text-popover-foreground border border-border shadow-lg p-3 rounded-lg"
+                            >
+                              <p className="text-xs line-clamp-6">{source.text}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+
+                      // If it's a normal link, render it normally
+                      return (
+                        <a href={href} {...props} target="_blank" rel="noopener noreferrer">
+                          {children}
+                        </a>
+                      );
+                    },
+                  }}
+                >
+                  {parsedContent.content}
+                </ReactMarkdown>
                 </TooltipProvider>
               ) : (
                 <span className="animate-pulse">|</span>

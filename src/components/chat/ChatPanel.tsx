@@ -93,9 +93,11 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
                     // Stop polling, show error
                     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
                     setIsHistoryLoading(false);
-                    toast.error("Analysis Failed", {
-                        description: "We couldn't process this chat file. Please try uploading it again."
+                    toast.warning("Processing Failed", {
+                        description: "There was an error processing your chat data. You can still chat, but without chat-specific insights.",
+                        duration: 8000,
                     });
+                    setMessages(INITIAL_WELCOME_MESSAGE);
                 }
                 // If pending/processing, do nothing (keep polling, keep history loading)
             } catch (error) {
