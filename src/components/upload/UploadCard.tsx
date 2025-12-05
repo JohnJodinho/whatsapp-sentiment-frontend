@@ -139,7 +139,7 @@ export function UploadCard() {
   };
 
   const handleDeleteError = () => {
-    toast.error("Deletion Failed", { description: "Could not delete the chat. Please try again." });
+    toast.error("Deletion Error", { description: "Deletion error. refreshing page..." });
   };
 
   const handleCheckSentiments = () => navigate("/sentiment-dashboard");
