@@ -126,7 +126,7 @@ export default function SentimentDashboardPage() {
   // ✅ When processing fails
   const handleProcessingError = (errorData: ErrorData) => {
     console.error("Sentiment processing error:", errorData);
-    if (errorData.error.includes("cancelled by user")) {
+    if (errorData.error.includes("Cancelled by user")) {
       handleCancelAndClear();
     } else {
       setSentimentStatus("failed");

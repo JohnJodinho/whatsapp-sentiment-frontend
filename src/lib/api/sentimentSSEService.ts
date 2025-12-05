@@ -47,7 +47,7 @@ export function monitorSentimentProgress(
     try {
         // The backend sends {"error": "Cancelled by user"} inside the data
         const data = JSON.parse(event.data);
-        onError({ error: data.error || "Cancelled by user" });
+        onError({ error: data.error || "Analysis cancelled by user" });
     } catch {
         // JSON.parse failed or data missing — report a generic cancellation message
         onError({ error: "Analysis cancelled." });
