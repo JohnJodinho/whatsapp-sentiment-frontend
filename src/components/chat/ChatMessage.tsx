@@ -26,74 +26,75 @@ const formatTimestamp = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
   
-  const GROUPED_CITATION_REGEX = /\[\s*((?:[\w_]+:\d+\s*,?\s*)+)\s*\]/g;
+  const GROUPED_CITATION_REGEX = /\[\s*((?:(?:[\w_]+:\s*)?\d+\s*,?\s*)+)\s*\]/g;
   
   interface ParsedContent {
     content: string;
     sourceMap: Map<string, ChatSource>;
   }
   
-  function parseAndReplaceCitations(content: string, sources: ChatSource[]): ParsedContent {
-  if (!sources || sources.length === 0) {
-    return { content, sourceMap: new Map() };
-  }
-
-  const uniqueSources = new Map<string, ChatSource>();
-  const citationMap = new Map<string, number>();
-  let citationCounter = 1;
-
-  const sourceLookup = new Map<string, ChatSource>();
-  sources.forEach((s) => {
-    const id = String(s.source_id);
-    
-    // A. Map by exact ID (CRITICAL FIX: This allows lookup when prefix is stripped)
-    sourceLookup.set(id, s);
-    
-    // B. Map by composite keys (optional backup)
-    if (s.type) sourceLookup.set(`${s.type}:${id}`, s);
-    if (s.source_table) sourceLookup.set(`${s.source_table}:${id}`, s);
-  });
-
-  const newContent = content.replace(
-    GROUPED_CITATION_REGEX,
-    (fullTag, groupContent) => {
-      const keys = groupContent.split(",").map((k: string) => k.trim());
-      const replacements: string[] = [];
-
-      keys.forEach((key: string) => {
-        // key is like "source_table:201821" or "messages:123"
-        
-        // Strategy: extract just the ID part (the digits at the end)
-        const idMatch = key.match(/:(\d+)$/);
-        const lookupKey = idMatch ? idMatch[1] : key;
-
-        // Now lookup using just the ID (which we mapped in step A above)
-        const sourceObject = sourceLookup.get(lookupKey);
-
-        if (sourceObject) {
-          // Use the unique ID of the source object itself to handle duplicates
-          // or just use the lookupKey if unique enough.
-          // Using a composite key for the citation map ensures stability.
-          const uniqueKey = `${sourceObject.type || 'source'}:${sourceObject.source_id}`;
-          
-          let index = citationMap.get(uniqueKey);
-          if (index === undefined) {
-            index = citationCounter++;
-            citationMap.set(uniqueKey, index);
-            uniqueSources.set(String(index), sourceObject);
-          }
-          
-          replacements.push(`[${index}](#citation-${index})`);
-        }
-      });
-
-      if (replacements.length === 0) return fullTag;
-      return replacements.join(" ");
+  function parseAndReplaceCitations(
+    content: string,
+    sources: ChatSource[]
+  ): ParsedContent {
+    if (!sources || sources.length === 0) {
+      return { content, sourceMap: new Map() };
     }
-  );
 
-  return { content: newContent, sourceMap: uniqueSources };
-}
+    const uniqueSources = new Map<string, ChatSource>();
+    const citationMap = new Map<string, number>();
+    let citationCounter = 1;
+
+    const sourceLookup = new Map<string, ChatSource>();
+    sources.forEach((s) => {
+      const id = String(s.source_id);
+      // 1. Map strictly by ID so we can find "203319" even without a prefix
+      sourceLookup.set(id, s);
+      
+      // 2. Optional: Keep composite keys if needed
+      if (s.type) sourceLookup.set(`${s.type}:${id}`, s);
+    });
+
+    const newContent = content.replace(
+      GROUPED_CITATION_REGEX,
+      (fullTag, groupContent) => {
+        // Split by comma to get individual items like "source_table:202444" and "203319"
+        const keys = groupContent.split(",").map((k: string) => k.trim());
+        const replacements: string[] = [];
+
+        keys.forEach((key: string) => {
+          if (!key) return;
+
+          // CHANGED: Aggressively extract just the *last number* in the string.
+          // "source_table:202444" -> "202444"
+          // "203319"              -> "203319"
+          const idMatch = key.match(/(\d+)$/);
+          const lookupKey = idMatch ? idMatch[1] : key;
+
+          const sourceObject = sourceLookup.get(lookupKey);
+
+          if (sourceObject) {
+            const uniqueKey = `${sourceObject.type || 'source'}:${sourceObject.source_id}`;
+            
+            let index = citationMap.get(uniqueKey);
+            if (index === undefined) {
+              index = citationCounter++;
+              citationMap.set(uniqueKey, index);
+              uniqueSources.set(String(index), sourceObject);
+            }
+            
+            // Using the Hash Link format we fixed earlier
+            replacements.push(`[${index}](#citation-${index})`);
+          }
+        });
+
+        if (replacements.length === 0) return fullTag;
+        return replacements.join(" "); // Result: "[1](#citation-1) [2](#citation-2)"
+      }
+    );
+
+    return { content: newContent, sourceMap: uniqueSources };
+  }
 
 interface ChatMessageProps {
   message: ChatMessageType;
