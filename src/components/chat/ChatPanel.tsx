@@ -67,55 +67,74 @@ export const ChatPanel = forwardRef<ChatPanelHandle>(
         }
     };
 
-    useEffect(() => {
-        const chatId = getChatId();
-        if (!chatId) {
-          setMessages(INITIAL_WELCOME_MESSAGE);
-          setIsHistoryLoading(false);
-          return;
-        }
 
-        const checkStatusAndLoad = async () => {
-          try {
-                const { status } = await getChatStatus(chatId);
-                setEmbeddingStatus(status);
+useEffect(() => {
+    const chatId = getChatId();
+    if (!chatId) {
+        setMessages(INITIAL_WELCOME_MESSAGE);
+        setIsHistoryLoading(false);
+        return;
+    }
 
-                if (status === "completed") {
-                    // Stop polling, load history
-                    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-                    
+    let isMounted = true;
+    const POLLING_INTERVAL = 5000; // Increased to 5s to save DB load
+
+    const checkStatusAndLoad = async () => {
+        try {
+            // 1. Check Status
+            const { status } = await getChatStatus(chatId);
+            
+            if (!isMounted) return;
+            setEmbeddingStatus(status);
+
+            if (status === "completed") {
+                // 2. Success: Load History ONE time and STOP polling
+                try {
                     const rawHistory = await fetchHistory(chatId);
                     const history = mapBackendHistory(rawHistory);
-                    setMessages(history.length > 0 ? history : INITIAL_WELCOME_MESSAGE);
-                    setIsHistoryLoading(false);
-                } 
-                else if (status === "failed") {
-                    // Stop polling, show error
-                    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+                    if (isMounted) {
+                        setMessages(history.length > 0 ? history : INITIAL_WELCOME_MESSAGE);
+                        setIsHistoryLoading(false);
+                    }
+                } catch (historyError) {
+                    console.error("Failed to load history:", historyError);
+                    if (isMounted) setIsHistoryLoading(false);
+                }
+            } 
+            else if (status === "failed") {
+                // 3. Failure: Stop polling, show error
+                if (isMounted) {
                     setIsHistoryLoading(false);
                     toast.warning("Processing Failed", {
-                        description: "There was an error processing your chat data. You can still chat, but without chat-specific insights.",
+                        description: "There was an error processing your chat data.",
                         duration: 8000,
                     });
                     setMessages(INITIAL_WELCOME_MESSAGE);
                 }
-                // If pending/processing, do nothing (keep polling, keep history loading)
-            } catch (error) {
-                console.error("Error checking chat status:", error);
-                // Keep trying or fail gracefully?
+            } 
+            else {
+                // 4. Pending/Processing: Schedule the NEXT check manually
+                // This prevents "overlap" and ensures we stop exactly when needed
+                if (isMounted) {
+                    pollingIntervalRef.current = setTimeout(checkStatusAndLoad, POLLING_INTERVAL);
+                }
             }
-        };
+        } catch (error) {
+            console.error("Error checking chat status:", error);
+            // Optional: Retry on error or stop? 
+            // Currently stopping to prevent infinite error loops on network fail
+            if (isMounted) setIsHistoryLoading(false);
+        }
+    };
 
+    // Kick off the first check
+    checkStatusAndLoad();
 
-        checkStatusAndLoad();
-
-        // Start polling
-        pollingIntervalRef.current = setInterval(checkStatusAndLoad, 3000);
-
-        return () => {
-            if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-        };
-    }, []);
+    return () => {
+        isMounted = false;
+        if (pollingIntervalRef.current) clearTimeout(pollingIntervalRef.current);
+    };
+}, []);
 
     useImperativeHandle(ref, () => ({
       clearChat: async () => {

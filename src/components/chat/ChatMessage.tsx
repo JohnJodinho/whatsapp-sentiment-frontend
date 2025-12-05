@@ -26,7 +26,7 @@ const formatTimestamp = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
   
-  const GROUPED_CITATION_REGEX = /\[((?:(?:source_table:)?(?:messages|segments_sender):\d+(?:,\s*)?)+)\]/g;
+  const GROUPED_CITATION_REGEX = /\[\s*((?:[\w_]+:\d+\s*,?\s*)+)\s*\]/g;
   
   interface ParsedContent {
     content: string;
@@ -44,35 +44,53 @@ const formatTimestamp = (date: Date) => {
 
   const sourceLookup = new Map<string, ChatSource>();
   sources.forEach((s) => {
-    sourceLookup.set(`${s.type}:${s.source_id}`, s);
-    sourceLookup.set(`${s.source_table}:${s.source_id}`, s);
+    const id = String(s.source_id);
+    
+    // A. Map by exact ID (CRITICAL FIX: This allows lookup when prefix is stripped)
+    sourceLookup.set(id, s);
+    
+    // B. Map by composite keys (optional backup)
+    if (s.type) sourceLookup.set(`${s.type}:${id}`, s);
+    if (s.source_table) sourceLookup.set(`${s.source_table}:${id}`, s);
   });
 
-  const newContent = content.replace(GROUPED_CITATION_REGEX, (fullTag, groupContent) => {
-    const keys = groupContent.split(",").map((k: string) => k.trim());
-    const replacements: string[] = [];
+  const newContent = content.replace(
+    GROUPED_CITATION_REGEX,
+    (fullTag, groupContent) => {
+      const keys = groupContent.split(",").map((k: string) => k.trim());
+      const replacements: string[] = [];
 
-    keys.forEach((key: string) => {
-      const cleanKey = key.replace("source_table:", "");
-      const sourceObject = sourceLookup.get(cleanKey);
+      keys.forEach((key: string) => {
+        // key is like "source_table:201821" or "messages:123"
+        
+        // Strategy: extract just the ID part (the digits at the end)
+        const idMatch = key.match(/:(\d+)$/);
+        const lookupKey = idMatch ? idMatch[1] : key;
 
-      if (sourceObject) {
-        let index = citationMap.get(cleanKey);
-        if (index === undefined) {
-          index = citationCounter++;
-          citationMap.set(cleanKey, index);
-          uniqueSources.set(String(index), sourceObject);
+        // Now lookup using just the ID (which we mapped in step A above)
+        const sourceObject = sourceLookup.get(lookupKey);
+
+        if (sourceObject) {
+          // Use the unique ID of the source object itself to handle duplicates
+          // or just use the lookupKey if unique enough.
+          // Using a composite key for the citation map ensures stability.
+          const uniqueKey = `${sourceObject.type || 'source'}:${sourceObject.source_id}`;
+          
+          let index = citationMap.get(uniqueKey);
+          if (index === undefined) {
+            index = citationCounter++;
+            citationMap.set(uniqueKey, index);
+            uniqueSources.set(String(index), sourceObject);
+          }
+          
+          replacements.push(`[${index}](#citation-${index})`);
         }
-        // CHANGED: Output a Markdown link instead of HTML
-        // Format: [Label](citation:ID)
-        replacements.push(`[${index}](citation:${index})`);
-      }
-    });
+      });
 
-    if (replacements.length === 0) return fullTag;
-    // Join with spaces or commas if you prefer, but spaces usually look cleaner
-    return replacements.join(" "); 
-  });
+      if (replacements.length === 0) return fullTag;
+      return replacements.join(" ");
+    }
+  );
 
   return { content: newContent, sourceMap: uniqueSources };
 }
@@ -148,56 +166,72 @@ export function ChatMessage({ message, onSourceClick }: ChatMessageProps) {
               {parsedContent.content ? (
                 <TooltipProvider>
                   <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]} // You can actually remove this now if you want!
-                  components={{
-                    // CHANGED: We now intercept 'a' tags (links) instead of 'sup'
-                    a: ({ href, children, ...props }: ComponentPropsWithoutRef<'a'>) => {
-                      // Check if this link is one of our custom citations
-                      if (href?.startsWith("citation:")) {
-                        const citationId = href.split(":")[1];
-                        const source = citationId
-                          ? parsedContent.sourceMap.get(citationId)
-                          : undefined;
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeRaw]} 
+                    components={{
+                      a: ({ href, children, ...props }: ComponentPropsWithoutRef<'a'>) => {
+                        // 1. Check if the link starts with our hash prefix
+                        if (href?.startsWith("#citation-")) {
+                          
+                          // 2. FIX: Extract ID by replacing the prefix, not splitting by colon
+                          const citationId = href.replace("#citation-", "");
+                          
+                          const source = citationId
+                            ? parsedContent.sourceMap.get(citationId)
+                            : undefined;
 
-                        if (!source) return <>{children}</>;
+                          // If source isn't found, render plain text
+                          if (!source) return <>{children}</>;
 
-                        return (
-                          <Tooltip delayDuration={0}>
-                            <TooltipTrigger asChild>
-                              <sup
-                                // We render the <sup> here manually
-                                className="cursor-pointer text-[hsl(var(--cyan-accent))] font-bold hover:underline ml-0.5 select-none"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  onSourceClick(source);
-                                }}
+                          // 3. Render the clickable Tooltip
+                          return (
+                            <Tooltip delayDuration={0}>
+                              <TooltipTrigger asChild>
+                                <sup
+                                  className="cursor-pointer text-[hsl(var(--cyan-accent))] font-bold hover:underline ml-0.5 select-none"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault(); // crucial: stops the browser from jumping to top
+                                    onSourceClick(source);
+                                  }}
+                                >
+                                  [{children}]
+                                </sup>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                align="center"
+                                // Mobile: max-w-[80vw] ensures it doesn't go off screen
+                                // Desktop: max-w-sm (24rem) for a nice reading width
+                                className="max-w-[80vw] sm:max-w-sm bg-popover text-popover-foreground border border-border shadow-xl p-3 rounded-lg z-50 select-none"
                               >
-                                [{children}]
-                              </sup>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="top"
-                              className="max-w-xs bg-popover text-popover-foreground border border-border shadow-lg p-3 rounded-lg"
-                            >
-                              <p className="text-xs line-clamp-6">{source.text}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        );
-                      }
+                                <div className="space-y-1">
+                                  <p className="text-xs text-muted-foreground font-semibold mb-1">
+                                    Source Preview (ID: {citationId})
+                                  </p>
+                                  <p className="text-sm leading-snug line-clamp-4 break-words text-foreground/90">
+                                    {source.text}
+                                  </p>
+                                  <p className="text-[10px] text-[hsl(var(--cyan-accent))] font-medium mt-1 opacity-80">
+                                    Click to view full source
+                                  </p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
 
-                      // If it's a normal link, render it normally
-                      return (
-                        <a href={href} {...props} target="_blank" rel="noopener noreferrer">
-                          {children}
-                        </a>
-                      );
-                    },
-                  }}
-                >
-                  {parsedContent.content}
-                </ReactMarkdown>
+                        // Default behavior for normal links (e.g. google.com)
+                        return (
+                          <a href={href} {...props} target="_blank" rel="noopener noreferrer">
+                            {children}
+                          </a>
+                        );
+                      },
+                    }}
+                  >
+                    {parsedContent.content}
+                  </ReactMarkdown>
                 </TooltipProvider>
               ) : (
                 <span className="animate-pulse">|</span>

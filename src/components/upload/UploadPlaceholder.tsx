@@ -59,7 +59,7 @@ export function UploadPlaceholder({ onFileDrop, onFileReject, disabled }: Upload
                     "opacity-0 translate-y-4": !isDragging
                 }
              )}>
-                Drop it here to start analysis 🚀
+                Drop it here to start analysis 
              </p>
         </div>
       </div>

@@ -107,7 +107,7 @@ export function UploadCard() {
         setChat(chatData);
         localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatData));
         window.dispatchEvent(new CustomEvent("chat-updated"));
-        toast.success("Analysis Ready");
+        toast.success("Process Complete");
         setSelectedFile(null);
         setIsProcessing(false);
       }, 800);
@@ -170,7 +170,7 @@ export function UploadCard() {
           />
         </div>
         <p className="text-xs text-center text-muted-foreground font-medium uppercase tracking-wider">
-          {uploadPhase === 'uploading' ? `${Math.round(uploadProgress)}% Uploaded` : "AI Processing"}
+          {uploadPhase === 'uploading' ? `${Math.round(uploadProgress)}% Uploaded` : "Processing"}
         </p>
       </div>
     </div>
@@ -214,7 +214,7 @@ export function UploadCard() {
                   {uploadPhase === 'uploading' ? 'Uploading Chat' : 'Processing Chat'}
                 </DialogTitle>
                 <DialogDescription className="text-center">
-                   {uploadPhase === 'uploading' ? 'Securely uploading your export file.' : 'Generating sentiment insights.'}
+                   {uploadPhase === 'uploading' ? 'Securely uploading your export file.' : 'Processing your chat'}
                 </DialogDescription>
              </DialogHeader>
           )}

@@ -69,7 +69,7 @@ export function PrimaryCTA({
           <span>Processing...</span>
         </div>
       ) : (
-        "Analyze Chat"
+        "Process Chat"
       )}
     </Button>
   );
