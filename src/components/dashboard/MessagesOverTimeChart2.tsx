@@ -17,8 +17,10 @@ interface ChartData {
 interface MessagesOverTimeChartProps {
   isLoading: boolean;
   data: ChartData[] | null;
+  isExport?: boolean; // New Prop
 }
 
+// ... CustomTooltip and getChartConfig functions remain the same ...
 const CustomTooltip = ({ active, payload, label }: {
   active?: boolean;
   payload?: { value: string | number }[];
@@ -46,7 +48,7 @@ function getChartConfig(data: ChartData[]) {
   const lastDate = new Date(data[data.length - 1].date);
 
   if (isSameMonth(firstDate, lastDate) && isSameYear(firstDate, lastDate)) {
-    return (date: string) => format(new Date(date), "d"); // Just day number for tight spots
+    return (date: string) => format(new Date(date), "d"); 
   }
   if (isSameYear(firstDate, lastDate)) {
     return (date: string) => format(new Date(date), "MMM d");
@@ -54,7 +56,7 @@ function getChartConfig(data: ChartData[]) {
   return (date: string) => format(new Date(date), "MMM yy");
 }
 
-export function MessagesOverTimeChart({ isLoading, data }: MessagesOverTimeChartProps) {
+export function MessagesOverTimeChart({ isLoading, data, isExport = false }: MessagesOverTimeChartProps) {
   const { theme } = useTheme();
   const [tickColor, setTickColor] = useState("#000000");
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -80,13 +82,18 @@ export function MessagesOverTimeChart({ isLoading, data }: MessagesOverTimeChart
 
   const tickFormatter = getChartConfig(data);
 
+  // WRAPPER: If export, use standard div, else use motion.div
+  const Wrapper = isExport ? 'div' : motion.div;
+  const wrapperProps = isExport ? {} : {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, ease: "easeInOut" }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeInOut" }}
-    >
-      <Card className="rounded-2xl border border-border bg-card shadow-sm relative overflow-hidden hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 h-[400px]">
+    // @ts-expect-error dynamic wrapper type casting
+    <Wrapper {...wrapperProps}>
+      <Card className={`rounded-2xl border shadow-sm relative overflow-hidden h-[400px] ${isExport ? 'border-slate-200 bg-white' : 'border-border bg-card hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300'}`}>
         <CardHeader className="p-6 pb-2">
           <div className="flex justify-between items-start">
             <div>
@@ -95,8 +102,8 @@ export function MessagesOverTimeChart({ isLoading, data }: MessagesOverTimeChart
                     Daily message count throughout the chat.
                 </CardDescription>
             </div>
-            {/* Last updated hidden on mobile to save header space */}
-            <div className="hidden sm:block text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded-md">
+            {/* Show updated date even on PDF, it looks professional */}
+            <div className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded-md">
               Updated: {new Date().toLocaleDateString()}
             </div>
           </div>
@@ -114,17 +121,17 @@ export function MessagesOverTimeChart({ isLoading, data }: MessagesOverTimeChart
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} vertical={false} />
               <XAxis
                 dataKey="date"
-                tick={{ fill: tickColor, fontSize: isMobile ? 10 : 12 }}
+                tick={{ fill: tickColor, fontSize: 12 }} // Always 12px for export
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={tickFormatter}
-                interval="preserveStartEnd" // Ensures first and last dates are always visible
+                interval="preserveStartEnd"
                 minTickGap={30}
                 dy={10}
               />
-              {/* Hide Y Axis on mobile to prevent squashing chart width */}
               <YAxis
-                hide={isMobile}
+                // Always show YAxis for export
+                hide={isMobile && !isExport}
                 tick={{ fill: tickColor, fontSize: 12 }}
                 tickLine={false}
                 axisLine={false}
@@ -138,7 +145,7 @@ export function MessagesOverTimeChart({ isLoading, data }: MessagesOverTimeChart
                 type="monotone"
                 dataKey="count"
                 stroke="hsl(var(--mint))"
-                strokeWidth={isMobile ? 2 : 2.5}
+                strokeWidth={2.5}
                 fill="url(#areaGradient)"
                 dot={false}
                 activeDot={{ r: 4, strokeWidth: 2, fill: "hsl(var(--mint))", stroke: "hsl(var(--card))" }}
@@ -147,7 +154,7 @@ export function MessagesOverTimeChart({ isLoading, data }: MessagesOverTimeChart
           </ResponsiveContainer>
         </CardContent>
       </Card>
-    </motion.div>
+    </Wrapper>
   );
 }
 

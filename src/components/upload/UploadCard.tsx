@@ -204,7 +204,7 @@ export function UploadCard() {
              // Mobile Header inside Sheet
              <SheetHeader className="text-center mb-6">
                 <SheetTitle className="text-xl">
-                  {uploadPhase === 'uploading' ? 'Uploading Chat...' : 'Analyzing Sentiments...'}
+                  {uploadPhase === 'uploading' ? 'Uploading Chat...' : 'Processing Uploaded Chat data...'}
                 </SheetTitle>
              </SheetHeader>
           ) : (

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useTheme } from "next-themes";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, LabelList } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChartTooltip } from "@/components/ui/chart"; // Removed unused ChartContainer
 import type { ChartConfig } from "@/components/ui/chart";
@@ -31,6 +31,7 @@ export type ContributionChartData =
 interface ContributionChartProps {
   isLoading: boolean;
   data: ContributionChartData | null;
+  isExport?: boolean;
 }
 
 function useChartColors() {
@@ -45,17 +46,21 @@ function useChartColors() {
   return { tickColor };
 }
 
-export function ContributionChart({ isLoading, data }: ContributionChartProps) {
+export function ContributionChart({ isLoading, data, isExport = false }: ContributionChartProps) {
   const { tickColor } = useChartColors();
   const [topN, setTopN] = useState("30"); 
   const isMobile = useMediaQuery("(max-width: 768px)");
+  const participantCount = data?.type === "multi" ? data.data.length : 0;
+  const activeTopN = isExport 
+  ? (participantCount > 2 && participantCount < 10 ? participantCount.toString() : "10")
+  : topN;
 
   const filteredBarData = useMemo(() => {
     if (!data || data.type !== "multi") return [];
     return data.data
       .sort((a, b) => b.messages - a.messages)
-      .slice(0, parseInt(topN, 10));
-  }, [data, topN]);
+      .slice(0, parseInt(activeTopN, 10));
+  }, [data, activeTopN]);
 
   if (isLoading) {
     return <Skeleton className="h-[450px] rounded-2xl" />;
@@ -78,14 +83,18 @@ export function ContributionChart({ isLoading, data }: ContributionChartProps) {
 
     // Explicitly define the radius type for Recharts
     const barRadius: [number, number, number, number] = [0, 4, 4, 0];
-
+    const cardClass = isExport
+      ? "rounded-2xl border border-slate-200 bg-white shadow-sm  h-auto flex flex-col"
+      : "rounded-2xl border border-border bg-card shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 h-[450px] flex flex-col";
     return (
-      <Card className="rounded-2xl border border-border bg-card shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 h-[450px] flex flex-col">
+      
+      <Card className={cardClass}>
         <CardHeader className="pb-2 flex-row items-center justify-between">
           <div className="space-y-1">
             <CardTitle className="text-base sm:text-lg">Message Contribution</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">Messages sent by participant.</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">{isExport ? `Top ${activeTopN} participants` : "Messages sent by participant."}</CardDescription>
           </div>
+          {!isExport && ( 
           <Select value={topN} onValueChange={setTopN}>
             <SelectTrigger className="w-[100px] sm:w-[120px] h-8 text-xs">
               <SelectValue placeholder="Show Top" />
@@ -96,12 +105,15 @@ export function ContributionChart({ isLoading, data }: ContributionChartProps) {
               <SelectItem value="20">Top 20</SelectItem>
               <SelectItem value="30">Top 30</SelectItem>
             </SelectContent>
-          </Select>
+          </Select>)}
         </CardHeader>
         
-        <CardContent className="flex-1 w-full overflow-hidden p-0 relative">
-          <div className="h-full w-full overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 p-4">
-             <div style={{ height: `${chartHeight}px`, minWidth: isMobile ? "400px" : "100%" }}>
+        <CardContent className={`flex-1 w-full p-0 relative ${isExport ? '' : 'overflow-hidden'}`}>
+          <div className={`h-full w-full p-4 ${isExport ? '' : 'overflow-y-auto overflow-x-auto scrollbar-thin scrollbar-thumb-muted-foreground/20'}`}>
+             {/* If isExport, the container height is explicit based on data length + padding.
+                If not, chartHeight drives the inner scroll area.
+             */}
+             <div style={{ height: `${chartHeight}px`, minWidth: isMobile && !isExport ? "400px" : "100%" }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={filteredBarData} layout="vertical" margin={{ left: 0, right: 20, top: 0, bottom: 0 }}>
                     <defs>
@@ -118,7 +130,7 @@ export function ContributionChart({ isLoading, data }: ContributionChartProps) {
                         tick={{ fill: tickColor, fontSize: 12, fontWeight: 500 }} 
                         tickLine={false} 
                         axisLine={false} 
-                        width={isMobile ? 100 : 130} 
+                        width={isExport ? 150 : (isMobile ? 100 : 130)} 
                     />
                     <ChartTooltip
                       cursor={{ fill: 'hsl(var(--muted))', opacity: 0.3 }}
@@ -136,11 +148,20 @@ export function ContributionChart({ isLoading, data }: ContributionChartProps) {
                     />
                     <Bar 
                         dataKey="messages" 
-                        fill="url(#mintGradient)" 
+                        fill={isExport ? "#2dd4bf" : "url(#mintGradient)"}
                         radius={barRadius} 
                         barSize={20}
                         background={{ fill: 'hsl(var(--muted))', opacity: 0.1, radius: 4 }}
-                    />
+                    >
+                      {isExport && (
+                        <LabelList 
+                          dataKey="messages" 
+                          position="right" 
+                          formatter={(val: number) => val.toLocaleString()}
+                          style={{ fill: "hsl(var(--mint))", fontSize: "11px", fontWeight: "500" }}
+                        />
+                      )}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
              </div>
@@ -174,6 +195,7 @@ export function ContributionChart({ isLoading, data }: ContributionChartProps) {
         dataKey="messages"
         nameKey="name"
         labelFormatter={(val) => ((val / data.data.totalMessages) * 100).toFixed(0) + "%"}
+        isExport={isExport} 
       />
     );
   }
@@ -200,6 +222,7 @@ export function ContributionChart({ isLoading, data }: ContributionChartProps) {
         dataKey="percentage"
         nameKey="name"
         labelFormatter={(val) => `${val.toFixed(0)}%`}
+        isExport={isExport} 
       />
     );
   }

@@ -1,4 +1,3 @@
-
 import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
@@ -12,10 +11,11 @@ export const downloadDashboardPDF = async (elementId: string, fileName: string =
   }
 
   try {
+    // 1. Convert DOM to image
     const dataUrl = await toPng(element, { 
       cacheBust: true, 
-      pixelRatio: 2,
-      backgroundColor: "#ffffff",
+      pixelRatio: 2, // Higher quality
+      backgroundColor: "#ffffff", // Force white background
     });
 
     // 2. Load image to calculate dimensions
@@ -26,8 +26,7 @@ export const downloadDashboardPDF = async (elementId: string, fileName: string =
       const imgWidth = img.width;
       const imgHeight = img.height;
 
-      // 3. Create PDF with exact dimensions of the image
-      // "p" for portrait, "l" for landscape based on aspect ratio
+      // 3. Create PDF with exact dimensions of the image (adaptive size)
       const orientation = imgWidth > imgHeight ? 'l' : 'p';
       
       const pdf = new jsPDF({
@@ -40,7 +39,7 @@ export const downloadDashboardPDF = async (elementId: string, fileName: string =
       pdf.addImage(dataUrl, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save(fileName);
       
-      toast.success("Report downloaded!");
+      toast.success("Report downloaded successfully!");
     };
 
   } catch (error) {

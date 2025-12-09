@@ -27,12 +27,22 @@ export type ActivityChartData = {
 interface ActivityChartProps {
   isLoading: boolean;
   data: ActivityChartData;
+  isExport?: boolean;
 }
 
-const radarColors = [
+// Original Theme Colors (CSS Variables)
+const themeColors = [
   { name: "p1", stroke: "hsl(var(--mint))", fill: "hsl(var(--mint) / 0.3)" },
   { name: "p2", stroke: "hsl(var(--cyan-accent))", fill: "hsl(var(--cyan-accent) / 0.3)" },
   { name: "p3", stroke: "hsl(var(--blue-accent))", fill: "hsl(var(--blue-accent) / 0.3)" },
+];
+
+// Export Colors (Static Hex for PDF stability)
+// Using Hex + Alpha for fill (approx 30% opacity)
+const exportColors = [
+  { name: "p1", stroke: "#2dd4bf", fill: "#2dd4bf4d" }, 
+  { name: "p2", stroke: "#22d3ee", fill: "#22d3ee4d" },
+  { name: "p3", stroke: "#60a5fa", fill: "#60a5fa4d" },
 ];
 
 function useChartColors() {
@@ -47,15 +57,24 @@ function useChartColors() {
   return { tickColor };
 }
 
-export function ActivityChart({ isLoading, data }: ActivityChartProps) {
+export function ActivityChart({ isLoading, data, isExport = false }: ActivityChartProps) {
   const { tickColor } = useChartColors();
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+
+  // Use static black for export to ensure readability on white paper, otherwise use theme color
+  const currentTickColor = isExport ? "#000000" : tickColor;
+  
+  // Select color palette based on mode
+  const currentPalette = isExport ? exportColors : themeColors;
 
   useEffect(() => {
     if (data?.participants) {
       setSelectedParticipants(data.participants.map(p => p.name));
     }
   }, [data]);
+  const cardClass = isExport
+    ? "rounded-2xl border border-slate-200 bg-white shadow-sm h-auto w-auto"
+    : "rounded-2xl border border-border bg-card shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 h-[450px]";
 
   const chartData = useMemo(() => {
     if (!data) return [];
@@ -81,17 +100,21 @@ export function ActivityChart({ isLoading, data }: ActivityChartProps) {
   }
 
   return (
-    <Card className="rounded-2xl border border-border bg-card shadow-sm hover:shadow-lg hover:shadow-[hsl(var(--mint))]/10 transition-all duration-300 h-[450px]">
+    <Card className={cardClass}>
       <CardHeader className="pb-2 flex-row items-center justify-between">
         <div className="space-y-1">
           <CardTitle>Communication Style</CardTitle>
           <CardDescription>Breakdown of message types.</CardDescription>
         </div>
-        {data.participants.length === 3 && (
+        
+        {/* Hide Dropdown in Export Mode */}
+        {!isExport && data.participants.length === 3 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="ml-auto">
-                <span className="hidden sm:inline">{selectedParticipants.length === 3 ? "Top Three" : `${selectedParticipants.length} selected`}</span>
+                <span className="hidden sm:inline">
+                  {selectedParticipants.length === 3 ? "Top Three" : `${selectedParticipants.length} selected`}
+                </span>
                 <span className="sm:hidden">Filter</span>
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
@@ -114,16 +137,36 @@ export function ActivityChart({ isLoading, data }: ActivityChartProps) {
           </DropdownMenu>
         )}
       </CardHeader>
-      
-      {/* Scroll Container for Mobile */}
-      <CardContent className="h-[350px] overflow-hidden">
-        <div className="h-full w-full overflow-x-auto overflow-y-hidden">
-             <ChartContainer config={{}} className="h-full w-full min-w-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="70%">
-                  <CartesianGrid stroke="hsl(var(--border))" strokeOpacity={0.6} />
-                  <PolarAngleAxis dataKey="style" tick={{ fill: tickColor, fontSize: 11 }} />
-                  <PolarGrid stroke="hsl(var(--border))" strokeOpacity={0.6} />
+
+      {/* For Export: remove overflow-hidden to ensure no clipping, 
+        though usually fixed height handles it. 
+      */}
+      <CardContent className={`h-[350px] ${isExport ? '' : 'overflow-hidden'}`}>
+        <div className={`h-full w-full ${isExport ? '' : 'overflow-x-auto overflow-y-hidden'}`}>
+          <ChartContainer config={{}} className="h-full w-full min-w-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={chartData} cx="50%" cy="50%" outerRadius="70%">
+                
+                {/* Use static hex for grid in export (slate-300), 
+                  otherwise theme border 
+                */}
+                <CartesianGrid 
+                  stroke={isExport ? "#e2e8f0" : "hsl(var(--border))"} 
+                  strokeOpacity={0.6} 
+                />
+                
+                <PolarAngleAxis 
+                  dataKey="style" 
+                  tick={{ fill: currentTickColor, fontSize: 11 }} 
+                />
+                
+                <PolarGrid 
+                  stroke={isExport ? "#e2e8f0" : "hsl(var(--border))"} 
+                  strokeOpacity={0.6} 
+                />
+                
+                {/* Tooltips are useless in static PDF exports */}
+                {!isExport && (
                   <ChartTooltip
                     cursor={{ fill: 'hsl(var(--muted))', opacity: 0.5 }}
                     content={({ active, payload }) => {
@@ -135,7 +178,7 @@ export function ActivityChart({ isLoading, data }: ActivityChartProps) {
                               {payload.map((entry, index) => {
                                 const originalParticipant = data.participants.find(p => p.name === entry.name);
                                 const participantIndex = originalParticipant ? data.participants.indexOf(originalParticipant) : index;
-                                const color = radarColors[participantIndex % radarColors.length];
+                                const color = themeColors[participantIndex % themeColors.length];
                                 return (
                                   <span key={entry.name} style={{ color: color.stroke }} className="text-xs">
                                     {entry.name}: {entry.value}
@@ -149,28 +192,41 @@ export function ActivityChart({ isLoading, data }: ActivityChartProps) {
                       return null;
                     }}
                   />
-                  {data.participants.map((p, index) => {
-                    if (!selectedParticipants.includes(p.name)) return null;
-                    const color = radarColors[index % radarColors.length];
-                    return (
-                      <Radar
-                        key={p.name}
-                        name={p.name}
-                        dataKey={p.name}
-                        stroke={color.stroke}
-                        fill={color.fill}
-                        fillOpacity={0.6}
-                      />
-                    );
-                  })}
-                  <Legend 
-                    wrapperStyle={{ paddingTop: '10px', fontSize: '12px' }} 
-                    verticalAlign="bottom" 
-                    height={36}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+                )}
+
+                {data.participants.map((p, index) => {
+                  if (!selectedParticipants.includes(p.name)) return null;
+                  
+                  // Use the calculated palette (Export vs Theme)
+                  const color = currentPalette[index % currentPalette.length];
+                  
+                  return (
+                    <Radar
+                      key={p.name}
+                      name={p.name}
+                      dataKey={p.name}
+                      stroke={color.stroke}
+                      fill={color.fill}
+                      fillOpacity={0.6}
+                      // Disable animation during export so PDF captures the full shape
+                      isAnimationActive={!isExport}
+                    />
+                  );
+                })}
+                
+                <Legend
+                  wrapperStyle={{ 
+                    paddingTop: '10px', 
+                    fontSize: '12px',
+                    // Force black text for legend in export
+                    color: isExport ? '#000000' : 'inherit' 
+                  }}
+                  verticalAlign="bottom"
+                  height={36}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </CardContent>
     </Card>

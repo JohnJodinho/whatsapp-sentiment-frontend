@@ -57,7 +57,7 @@ export function HeaderBar({
           ) : (
             <>
               <Download className="w-4 h-4 mr-2" />
-              Download PDF
+              Export to PDF
             </>
           )}
         </Button>

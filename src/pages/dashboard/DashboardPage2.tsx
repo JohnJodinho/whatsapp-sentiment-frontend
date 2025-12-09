@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FolderOpen, Upload, ShieldAlert, X, FileText, Calendar, MessageCircle, ChevronDown } from "lucide-react";
+import { FolderOpen, Upload, ShieldAlert, X, FileText, Calendar, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 // Components
 import { Button } from "@/components/ui/button";
@@ -36,20 +35,16 @@ function ReportHeader({ data }: { data: DashboardData | null }) {
   const activeDays = data.kpiMetrics?.find(m => m.label === "Active Days")?.value ?? 0;
   
   return (
-    <div className="mb-8 border-b-2 border-slate-200 pb-6 font-sans">
+    <div className="mb-8 border-b-2 border-slate-200 pb-6 font-sans text-slate-900">
       <div className="flex justify-between items-start mb-6">
         <div>
-          <h1 className="text-4xl font-bold text-slate-900 tracking-tight mb-2">
+          <h1 className="text-4xl font-bold tracking-tight mb-2">
             Chat Analysis Report
           </h1>
           <div className="flex items-center gap-4 text-slate-500 text-sm">
             <span className="flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               Generated: {new Date().toLocaleDateString()}
-            </span>
-            <span className="flex items-center gap-1">
-              <MessageCircle className="w-4 h-4" />
-              Source: Chat Upload
             </span>
           </div>
         </div>
@@ -58,7 +53,8 @@ function ReportHeader({ data }: { data: DashboardData | null }) {
         </div>
       </div>
 
-      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-slate-700 space-y-2">
+      
+    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 text-slate-700 space-y-2">
         <h3 className="font-semibold text-slate-900 mb-2 flex items-center gap-2">
           <FileText className="w-4 h-4 text-blue-600" />
           Executive Summary
@@ -71,15 +67,14 @@ function ReportHeader({ data }: { data: DashboardData | null }) {
       </div>
     </div>
   );
+  
 }
 
 function DashboardView() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [showPrivacyBanner, setShowPrivacyBanner] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  
   const [isExporting, setIsExporting] = useState(false); 
-  
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [filterOptions, setFilterOptions] = useState<{ participants: string[] }>({
     participants: [],
@@ -90,9 +85,7 @@ function DashboardView() {
 
   const toggleFilters = () => setIsFiltersOpen((prev) => !prev);
 
-  // --- Initial Data Fetch ---
   useEffect(() => {
-    // 1. Check Local Storage first
     const cached = getAnalyticsData();
     const chat_id_in_store = cached?.chat_id || null;
     if (chat_id_in_store && Number(chat_id_in_store) !== Number(chatId)) {
@@ -103,10 +96,9 @@ function DashboardView() {
       setDashboardData(cached.general_dashboard);
       setFilterOptions({ participants: cached.general_dashboard.participants });
       setIsLoading(false);
-      return; // Skip the network request
+      return; 
     }
 
-    // 2. Fallback to Network Request if no cache
     setIsLoading(true);
     fetchDashboardData(chatId)
       .then((data) => {
@@ -124,7 +116,6 @@ function DashboardView() {
 
   const handleApplyFilters = (filters: FilterState) => {
     setIsLoading(true);
-    // On mobile, close the drawer when applying
     if (window.innerWidth < 768) {
       setIsFiltersOpen(false);
     }
@@ -146,14 +137,13 @@ function DashboardView() {
   const handleDownloadPDF = async () => {
     if (isLoading || !dashboardData) return;
     setIsExporting(true);
-    setIsFiltersOpen(false); 
-    toast.info("Generating Report...", { description: "Applying document formatting..." });
-
+    // toast.info("Generating Report...", { description: "Formatting for PDF..." });
     setTimeout(async () => {
       try {
+        
         await downloadDashboardPDF(
-          "dashboard-content", 
-          `Analysis-Report-${new Date().toISOString().split('T')[0]}.pdf`
+          "pdf-export-stage", 
+          `Dashboard-Analysis-Report-${new Date().toISOString().split('T')[0]}.pdf`
         );
       } catch (e) {
         console.error(e);
@@ -161,188 +151,215 @@ function DashboardView() {
       } finally {
         setIsExporting(false);
       }
-    }, 1000); 
+    }, 2500); 
   };
 
   return (
-    <main className="flex-1 bg-background text-foreground min-h-screen">
-      <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] mx-auto space-y-6">
-        
-        {/* Header Bar */}
-        {!isExporting && (
+    <main className="flex-1 bg-background text-foreground min-h-screen relative z-0">
+      <div className="relative z-10 bg-background min-h-screen"> 
+        <div className="px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] mx-auto space-y-6">
+          
+          {/* Header Bar */}
           <HeaderBar 
             onToggleFilters={toggleFilters} 
             isFiltersOpen={isFiltersOpen} 
             onDownload={handleDownloadPDF}
             isLoading={isExporting} 
           />
-        )}
 
-        {/* Privacy Banner */}
-        <AnimatePresence>
-          {showPrivacyBanner && !isExporting && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
-            >
-              <Alert className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100 relative pr-10 rounded-xl">
-                <ShieldAlert className="h-4 w-4 stroke-blue-600 dark:stroke-blue-400" />
-                <AlertTitle className="text-blue-700 dark:text-blue-300 font-semibold">Data Retention Policy</AlertTitle>
-                <AlertDescription className="text-sm opacity-90">
-                  Your chat data is securely processed for analysis and is <strong>automatically deleted after 4 hours</strong>.
-                </AlertDescription>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="absolute top-2 right-2 h-6 w-6 text-blue-500 rounded-full"
-                  onClick={() => setShowPrivacyBanner(false)}
+          {/* Privacy Banner */}
+          <AnimatePresence>
+            {showPrivacyBanner && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <Alert className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-900 dark:text-blue-100 relative pr-10 rounded-xl">
+                  <ShieldAlert className="h-4 w-4 stroke-blue-600 dark:stroke-blue-400" />
+                  <AlertTitle className="text-blue-700 dark:text-blue-300 font-semibold">Data Retention Policy</AlertTitle>
+                  <AlertDescription className="text-sm opacity-90">
+                    Your chat data is securely processed for analysis and is <strong>automatically deleted after 4 hours</strong>.
+                  </AlertDescription>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 h-6 w-6 text-blue-500 rounded-full"
+                    onClick={() => setShowPrivacyBanner(false)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </Alert>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* --- DESKTOP FILTER VIEW --- */}
+          <AnimatePresence>
+            {isFiltersOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="hidden md:block overflow-hidden" 
+              >
+                <FiltersCard
+                  isLoading={isLoading}
+                  onApplyFilters={handleApplyFilters}
+                  participants={filterOptions.participants}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* --- MOBILE FILTER DRAWER --- */}
+          <AnimatePresence>
+            {isFiltersOpen && (
+              <div className="md:hidden relative z-50">
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-background/80 backdrop-blur-sm"
+                  onClick={() => setIsFiltersOpen(false)}
+                />
+                <motion.div
+                  initial={{ y: "100%" }}
+                  animate={{ y: 0 }}
+                  exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 25, stiffness: 500 }}
+                  className="fixed inset-x-0 bottom-0 bg-card border-t rounded-t-[20px] shadow-2xl flex flex-col max-h-[85vh]"
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              </Alert>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  <div className="flex items-center justify-between p-4 border-b">
+                      <h3 className="font-semibold text-lg">Filters</h3>
+                      <Button variant="ghost" size="icon" onClick={() => setIsFiltersOpen(false)}>
+                        <ChevronDown className="h-5 w-5" />
+                      </Button>
+                  </div>
+                  <div className="overflow-y-auto p-4 pb-8">
+                      <FiltersCard
+                        isLoading={isLoading}
+                        onApplyFilters={handleApplyFilters}
+                        participants={filterOptions.participants}
+                      />
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
 
-        {/* --- DESKTOP FILTER VIEW (Inline) --- */}
-        <AnimatePresence>
-          {isFiltersOpen && !isExporting && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="hidden md:block overflow-hidden" 
-            >
-              <FiltersCard
-                isLoading={isLoading}
-                onApplyFilters={handleApplyFilters}
-                participants={filterOptions.participants}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* --- MOBILE FILTER DRAWER (Bottom Sheet) --- */}
-        <AnimatePresence>
-          {isFiltersOpen && !isExporting && (
-             <div className="md:hidden relative z-50">
-               {/* Backdrop */}
-               <motion.div 
-                 initial={{ opacity: 0 }}
-                 animate={{ opacity: 1 }}
-                 exit={{ opacity: 0 }}
-                 className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-                 onClick={() => setIsFiltersOpen(false)}
-               />
-               {/* Drawer Content */}
-               <motion.div
-                 initial={{ y: "100%" }}
-                 animate={{ y: 0 }}
-                 exit={{ y: "100%" }}
-                 transition={{ type: "spring", damping: 25, stiffness: 500 }}
-                 className="fixed inset-x-0 bottom-0 bg-card border-t rounded-t-[20px] shadow-2xl flex flex-col max-h-[85vh]"
-               >
-                 <div className="flex items-center justify-between p-4 border-b">
-                    <h3 className="font-semibold text-lg">Filters</h3>
-                    <Button variant="ghost" size="icon" onClick={() => setIsFiltersOpen(false)}>
-                      <ChevronDown className="h-5 w-5" />
-                    </Button>
-                 </div>
-                 <div className="overflow-y-auto p-4 pb-8">
-                    <FiltersCard
-                      isLoading={isLoading}
-                      onApplyFilters={handleApplyFilters}
-                      participants={filterOptions.participants}
-                    />
-                 </div>
-               </motion.div>
+      
+          <div id="dashboard-content" className="space-y-6"> 
+            {/* Grid Layout */}
+            <div className="grid grid-cols-12 gap-6">
+              <div className="col-span-12">
+                <KPICardsRow isLoading={isLoading} data={dashboardData?.kpiMetrics || null} />
+              </div>
+              <div className="col-span-12">
+                <MessagesOverTimeChart isLoading={isLoading} data={dashboardData?.messagesOverTime || null} />
+              </div>
+              <div className="col-span-12 lg:col-span-7">
+                <ParticipantCharts isLoading={isLoading} contributionData={dashboardData?.contribution || null} activityData={dashboardData?.activity || null} />
+              </div>
+              <div className="col-span-12 lg:col-span-5">
+                <TimelineTable isLoading={isLoading} data={dashboardData?.timeline || null} participantCount={dashboardData?.participantCount ?? 0} />
+              </div>
+              <div className="col-span-12">
+                <OptionalInsights isLoading={isLoading} activityByDayData={dashboardData?.activityByDay || null} hourlyActivityData={dashboardData?.hourlyActivity || null} />
+              </div>
+            </div>
+          </div>
+        </div>
+        {isExporting && (
+        <>
+          {/* CURTAIN */}
+          <div className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center space-y-4">
+             <div className="p-4 rounded-full bg-slate-50 border border-slate-100 shadow-sm animate-pulse">
+                <Loader2 className="w-10 h-10 text-[hsl(var(--mint))] animate-spin" />
              </div>
-          )}
-        </AnimatePresence>
+             <div className="text-center space-y-1">
+               <h3 className="text-xl font-semibold text-slate-900">Generating Report</h3>
+               <p className="text-slate-500 text-sm">Formatting charts for high-resolution PDF...</p>
+             </div>
+          </div>
+        <div
+            id="pdf-export-stage"
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "1200px",       // FORCE DESKTOP WIDTH
+              minHeight: "100vh",
+              zIndex: 9998,          // Behind the curtain, but visible to browser
+              backgroundColor: "#f1f5f9",
+              padding: "40px",
+              // FORCE LIGHT MODE VARIABLES
+              "--background": "0 0% 100%", 
+              "--foreground": "222.2 84% 4.9%",
+              "--card": "0 0% 100%",
+              "--card-foreground": "222.2 84% 4.9%",
+              "--popover": "0 0% 100%",
+              "--popover-foreground": "222.2 84% 4.9%",
+              "--primary": "222.2 47.4% 11.2%",
+              "--primary-foreground": "210 40% 98%",
+              "--muted": "210 40% 96.1%",
+              "--muted-foreground": "215.4 16.3% 46.9%",
+              "--border": "214.3 31.8% 91.4%",
+              "--radius": "0.5rem"
+            } as React.CSSProperties}
+            className="theme-light font-sans text-slate-900"
+          >
+            <ReportHeader data={dashboardData} />
+            
+            <div className="grid grid-cols-12 gap-6">
 
-        {/* --- REPORT WRAPPER --- */}
-        <div 
-          id="dashboard-content" 
-          className={cn(
-            "space-y-6 transition-colors duration-300",
-            isExporting ? "bg-white text-slate-900 p-12 theme-light" : ""
-          )}
-          style={isExporting ? {
-            "--background": "0 0% 100%", 
-            "--foreground": "222.2 84% 4.9%",
-            "--card": "0 0% 100%",
-            "--card-foreground": "222.2 84% 4.9%",
-            "--popover": "0 0% 100%",
-            "--popover-foreground": "222.2 84% 4.9%",
-            "--primary": "222.2 47.4% 11.2%",
-            "--primary-foreground": "210 40% 98%",
-            "--muted": "210 40% 96.1%",
-            "--muted-foreground": "215.4 16.3% 46.9%",
-            "--border": "214.3 31.8% 91.4%",
-          } as React.CSSProperties : {}}
-        > 
-          
-          {isExporting && <ReportHeader data={dashboardData} />}
+              <div className="col-span-12">
+                <KPICardsRow isLoading={isLoading} data={dashboardData?.kpiMetrics || null} isExport={true} />
+              </div>
 
-          {/* Grid Layout: Stays grid-cols-12, but children span 12 on mobile */}
-          <div className="grid grid-cols-12 gap-6">
-            <div className="col-span-12">
-              <KPICardsRow
-                isLoading={isLoading}
-                data={dashboardData?.kpiMetrics || null}
-              />
-            </div>
+              <div className="col-span-12">
+                <MessagesOverTimeChart isLoading={isLoading} data={dashboardData?.messagesOverTime || null} isExport={true} />
+              </div>
 
-            <div className="col-span-12">
-              <MessagesOverTimeChart
-                isLoading={isLoading}
-                data={dashboardData?.messagesOverTime || null}
-              />
-            </div>
+              {/* ParticipantCharts now takes all 12 columns */}
+              <div className="col-span-12">
+                <ParticipantCharts
+                  isLoading={isLoading}
+                  contributionData={dashboardData?.contribution || null}
+                  activityData={dashboardData?.activity || null}
+                  isExport={true}
+                />
+              </div>
 
-            <div className="col-span-12 lg:col-span-7">
-              <ParticipantCharts
-                isLoading={isLoading}
-                contributionData={dashboardData?.contribution || null}
-                activityData={dashboardData?.activity || null}
-              />
-            </div>
+              {/* TimelineTable now follows below, also full width */}
+              <div className="col-span-12">
+                <TimelineTable
+                  isLoading={isLoading}
+                  data={dashboardData?.timeline || null}
+                  participantCount={dashboardData?.participantCount ?? 0}
+                  isExport={true}
+                />
+              </div>
 
-            <div className="col-span-12 lg:col-span-5">
-              <TimelineTable
-                isLoading={isLoading}
-                data={dashboardData?.timeline || null}
-                participantCount={dashboardData?.participantCount ?? 0}
-              />
-            </div>
-
-            <div className="col-span-12">
-              {isExporting ? (
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 page-break-inside-avoid">
-                    <OptionalInsights
-                      isLoading={isLoading}
-                      activityByDayData={dashboardData?.activityByDay || null}
-                      hourlyActivityData={dashboardData?.hourlyActivity || null}
-                    />
-                 </div>
-              ) : (
+              <div className="col-span-12 grid grid-cols-1 gap-6">
                 <OptionalInsights
                   isLoading={isLoading}
                   activityByDayData={dashboardData?.activityByDay || null}
                   hourlyActivityData={dashboardData?.hourlyActivity || null}
+                  isExport={true}
                 />
-              )}
+              </div>
+
+            </div>
+
+            
+            <div className="mt-12 pt-6 border-t border-slate-200 text-center text-slate-400 text-sm">
+               Generated by SentimentScope • Page 1 of 1
             </div>
           </div>
-          
-          {isExporting && (
-             <div className="mt-12 pt-6 border-t border-slate-200 text-center text-slate-400 text-sm">
-                Generated by Chat Analyzer • Page 1 of 1
-             </div>
-          )}
-        </div>
+        </>
+      )}
       </div>
     </main>
   );
