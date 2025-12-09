@@ -31,6 +31,7 @@ import {
   ArrowRight,
   FileText,
   Terminal,
+  Download
 } from "lucide-react";
 
 export default function AboutPage() {
@@ -145,7 +146,44 @@ export default function AboutPage() {
             </CardContent>
           </Card>
         </section>
-
+        {/* --- NEW SECTION: QUICK TEST DEMO --- */}
+        <section className="max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-br from-background to-muted/50 border-dashed border-2 border-border/60">
+            <CardContent className="p-8 flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
+              <div className="space-y-3 flex-1">
+                <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                   <Badge variant="secondary" className="bg-[hsl(var(--mint))]/10 text-[hsl(var(--mint))] hover:bg-[hsl(var(--mint))]/20">
+                     Try it now
+                   </Badge>
+                </div>
+                <h3 className="text-2xl font-bold">No chat export? Test with ours!</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Don't want to use your own data yet? Download our sample conversation between two fictional participants, 
+                  <span className="font-semibold text-foreground"> John Ibrahim</span> and 
+                  <span className="font-semibold text-foreground"> Tunde Adewale</span>. 
+                  It is perfectly formatted to demonstrate the sentiment tracking, activity charts, and AI chat features.
+                </p>
+              </div>
+              
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="shrink-0 h-14 px-6 border-input hover:border-[hsl(var(--mint))] hover:text-[hsl(var(--mint))] hover:bg-[hsl(var(--mint))]/5 transition-all"
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = "/WhatsApp Chat with Tunde Adewale.zip";
+                  link.download = "WhatsApp Chat with Tunde Adewale.zip";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Download Demo .txt
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
 
         {/* --- SECTION 2: FEATURE TOUR --- */}
         <section>

@@ -43,7 +43,7 @@ export function Navbar() {
       <div className="flex items-center justify-between h-16 px-4 md:px-8 max-w-7xl mx-auto">
         
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 z-50">
+        <Link to="/" className="flex gap-2 z-50">
           <h1 className="text-xl font-bold tracking-tight">
             Sentiment<span className="text-[hsl(var(--mint))]">Scope</span>
           </h1>
@@ -52,7 +52,7 @@ export function Navbar() {
         {/* ----------------------- */}
         {/* DESKTOP NAVIGATION      */}
         {/* ----------------------- */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-6">
           {navLinks.map((link) =>
             link.name === "Dashboard" ? (
               <DropdownMenu key={link.name}>
