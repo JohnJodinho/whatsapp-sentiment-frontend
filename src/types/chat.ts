@@ -16,6 +16,8 @@ export interface RagSource {
   source_id: number; 
   distance: number; 
   text: string; 
+  sender_name?: string;
+  timestamp?: Date;
 }
 export interface ChatSource extends RagSource {
 

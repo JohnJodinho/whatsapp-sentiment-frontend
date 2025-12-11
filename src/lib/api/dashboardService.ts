@@ -78,7 +78,7 @@ export async function fetchDashboardData(
   try{
     const response = await apiClient.get<DashboardData>(url, {
       params: params,
-      timeout: 30000
+      timeout: 60000
     });
 
     const data: DashboardData = response.data;
