@@ -26,7 +26,7 @@ const formatTimestamp = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
   
-  const GROUPED_CITATION_REGEX = /\[\s*((?:(?:[\w_]+:\s*)?\d+\s*,?\s*)+)\s*\]/g;
+  const GROUPED_CITATION_REGEX = /\[\s*((?:(?:[\w_]+:\s*)*\d+\s*,?\s*)+)\s*\]/g;
   
   interface ParsedContent {
     content: string;
