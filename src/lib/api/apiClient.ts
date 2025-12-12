@@ -52,7 +52,7 @@ apiClient.interceptors.response.use(
         localStorage.removeItem(ANALYTICS_STORAGE_KEY);
       }
       
-      window.location.href = '/'; 
+      window.location.href = '/upload'; 
       
       return Promise.reject(error);
     }
@@ -72,7 +72,7 @@ apiClient.interceptors.response.use(
          if (localStorage.getItem(ANALYTICS_STORAGE_KEY)) {
            localStorage.removeItem(ANALYTICS_STORAGE_KEY);
          }
-         window.location.href = '/';
+         window.location.href = '/upload';
       }
     }
 

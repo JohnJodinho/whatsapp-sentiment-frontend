@@ -59,12 +59,12 @@ export default function HomePage() {
             </div>
             
             <h1 className="text-4xl md:text-5xl font-extrabold leading-tight text-foreground tracking-tight text-balance">
-              Unlock the Emotional Intelligence of Your Chats
+               Turn Your Chat History into Clear, Actionable Insights
             </h1>
             
             <p className="mt-6 text-base md:text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto md:mx-0">
-              Transform raw WhatsApp history into actionable insights. 
-              Upload your data for deep semantic analysis and chat directly with your history using our AI assistant.
+              Stop guessing what your conversations really mean. 
+              Whether it's analyzing customer feedback or understanding personal relationships, our AI transforms your WhatsApp exports into easy-to-read reports.
             </p>
 
             {/* Mobile: Vertical Stack | Desktop: Horizontal Row */}
@@ -74,7 +74,7 @@ export default function HomePage() {
                 className="w-full sm:w-auto px-8 py-6 text-base bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))] text-primary-foreground hover:opacity-90 font-semibold shadow-lg shadow-mint/20 transition-all active:scale-95"
                 onClick={() => navigate("/upload")}
               >
-                Analyze My Data
+                Analyze My Chat
               </Button>
               <Button
                 size="lg"
@@ -118,7 +118,7 @@ export default function HomePage() {
             Deep Analysis, Strictly Private
           </h2>
           <p className="text-muted-foreground mb-10 max-w-2xl mx-auto">
-            We combine advanced Multimodal RAG technology with a strict transient data policy.
+            We use enterprise-grade AI to analyze your text, combined with a strict policy to never store your data permanently.
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
@@ -126,7 +126,7 @@ export default function HomePage() {
             <FeatureCard 
               icon={<MessageSquareText className="w-6 h-6" />}
               title="Sentiment Trajectory"
-              desc="Detect subtle emotional shifts and track how conversations evolve over time using advanced NLP."
+              desc="See how the mood changes over time. Identify satisfaction dips in client chats or emotional patterns in personal conversations."
               colorClass="text-[hsl(var(--mint))]"
               bgClass="bg-[hsl(var(--mint))]/10"
             />
@@ -134,15 +134,15 @@ export default function HomePage() {
             <FeatureCard 
               icon={<Bot className="w-6 h-6" />}
               title="Interactive AI Assistant"
-              desc="Don't just view charts—talk to them. Ask questions about specific messages or visuals."
+              desc="Don't scroll through thousands of messages. Just ask the AI: 'Why was the customer upset?' or 'What did we agree on?"
               colorClass="text-[hsl(var(--mint))]"
               bgClass="bg-[hsl(var(--mint))]/10"
             />
 
             <FeatureCard 
               icon={<GaugeCircle className="w-6 h-6" />}
-              title="High-Performance Parsing"
-              desc="Process years of chat history and generate comprehensive visualizations in seconds."
+              title="Instant Data Processing"
+              desc="Whether it's a week of logs or 2 years of history, our engine turns raw text into visual charts in seconds."
               colorClass="text-[hsl(var(--mint))]"
               bgClass="bg-[hsl(var(--mint))]/10"
             />
@@ -150,7 +150,7 @@ export default function HomePage() {
             <FeatureCard 
               icon={<ShieldAlert className="w-6 h-6" />}
               title="Transient Data Architecture"
-              desc="Strict 4-hour TTL policy. Your chats are encrypted, processed, and permanently deleted."
+              desc="Strict 4-hour TTL policy. Files are processed securely and permanently deleted from our servers after 4 hours."
               colorClass="text-amber-600"
               bgClass="bg-amber-500/10"
             />
@@ -240,7 +240,7 @@ export default function HomePage() {
               className="w-full sm:w-auto px-8 py-6 bg-white text-[hsl(var(--mint))] hover:bg-white/90 text-base font-bold shadow-xl active:scale-95 transition-all"
               onClick={() => navigate("/upload")}
             >
-              Start Analysis Now
+              Start Free Analysis
             </Button>
             <p className="text-white/60 text-xs sm:text-sm mt-4 sm:mt-0 sm:ml-6 flex items-center gap-2">
               <ShieldAlert className="w-3 h-3 sm:w-4 sm:h-4" /> Auto-expires in 4h
