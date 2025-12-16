@@ -26,7 +26,7 @@ const formatTimestamp = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
   
-  const GROUPED_CITATION_REGEX = /\[\s*((?:(?:[\w_]+:\s*)*\d+\s*,?\s*)+)\s*\]/g;
+  const GROUPED_CITATION_REGEX = /\[\s*((?:(?:[\w_]+:\s*)*\d+\s*[;,]?\s*)+)\s*\]/g;
   
   interface ParsedContent {
     content: string;
@@ -58,8 +58,9 @@ const formatTimestamp = (date: Date) => {
     const newContent = content.replace(
       GROUPED_CITATION_REGEX,
       (fullTag, groupContent) => {
-        // Split by comma to get individual items like "source_table:202444" and "203319"
-        const keys = groupContent.split(",").map((k: string) => k.trim());
+        // CHANGED: Split by either comma OR semicolon
+        const keys = groupContent.split(/[;,]/).map((k: string) => k.trim());
+        
         const replacements: string[] = [];
 
         keys.forEach((key: string) => {
