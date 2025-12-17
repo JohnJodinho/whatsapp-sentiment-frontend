@@ -61,7 +61,7 @@ export function SentimentHourChart({ isLoading, data }: SentimentHourChartProps)
         <CardContent className="p-0 pl-2 pr-4 h-[calc(100%-60px)]">
            {/* --- MOBILE FIX START --- */}
            <div className="w-full h-full overflow-x-auto pb-2">
-             <div className="h-full min-w-[600px] md:min-w-0">
+             <div className="h-full min-w-[800px] md:min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
@@ -69,9 +69,10 @@ export function SentimentHourChart({ isLoading, data }: SentimentHourChartProps)
                       dataKey="hour"
                       tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 10 }}
                       tickLine={false}
+                      tickMargin={8}
                       axisLine={false}
                       tickFormatter={(value) => `${value}h`}
-                      interval={0} // Force show all ticks when scrolling
+                      interval={2} // Force show all ticks when scrolling
                     />
                     <YAxis type="number" tick={false} tickLine={false} axisLine={false} domain={[0, 1]} />
               <Tooltip

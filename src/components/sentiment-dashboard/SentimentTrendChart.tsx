@@ -118,8 +118,12 @@ export function SentimentTrendChart({
                     tick={{ fill: "hsl(var(--hsl-muted-foreground))", fontSize: 11 }}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `${(value /10).toFixed(0)}%`}
-                    domain={[0, 1]}
+                    width={40}
+                    /* 1. Remove the division and % sign. 
+                      2. Remove domain={[0, 1]} so it automatically scales to 
+                          the maximum number of messages in your data.
+                    */
+                    tickFormatter={(value) => value.toLocaleString()}
                   />
               <Tooltip
                 cursor={{ stroke: "hsl(var(--muted))", strokeWidth: 2 }}

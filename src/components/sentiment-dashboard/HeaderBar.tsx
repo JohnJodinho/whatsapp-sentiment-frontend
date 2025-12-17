@@ -48,7 +48,7 @@ export function HeaderBar({
           className="rounded-xl flex-1 xl:flex-none text-white bg-gradient-to-r from-[hsl(var(--mint))] to-[hsl(var(--blue-accent))] transition-all hover:scale-105 hover:shadow-lg disabled:opacity-70"
           aria-label="Download dashboard as PDF"
           onClick={onDownload}
-          disabled={isLoading}
+          disabled={true}
         >
           {isLoading ? (
             <span className="flex items-center">
